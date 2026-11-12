@@ -168,6 +168,18 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
     var emailSubject by remember { mutableStateOf("") }
     var emailBody by remember { mutableStateOf("") }
 
+    // Each stage gets its own accent color for its input and selection fields.
+    val stepAccent = when (step) {
+        0 -> Color(0xFF45D9FF)
+        1 -> Color(0xFFFFC857)
+        2 -> Color(0xFF6DFFB8)
+        3 -> Color(0xFFFF6B8A)
+        4 -> Color(0xFFB18CFF)
+        5 -> Color(0xFFFF9F5A)
+        6 -> Color(0xFF65C7FF)
+        else -> Color(0xFFFFD76A)
+    }
+
     LaunchedEffect(Unit) {
         val message = "UNBLOCK"
         for (index in 1..message.length) {
@@ -271,7 +283,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                         ) {
                             when (step) {
                                 0 -> {
-                                    StepHeading("رقم الهاتف المحظور", "اكتب رقم واتساب المرتبط بالحساب الذي تريد فك حظره.")
+                                    StepHeading("رقم الهاتف المحظور", "اكتب رقم واتساب المرتبط بالحساب الذي تريد فك حظره.", stepAccent)
                                     OutlinedTextField(
                                         value = phone,
                                         onValueChange = { value -> phone = value.filter { it in '0'..'9' }.take(11); error = "" },
@@ -280,11 +292,18 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                         leadingIcon = { Icon(Icons.Filled.PhoneAndroid, contentDescription = null, tint = Mint) },
                                         placeholder = { Text("01xxxxxxxxx") },
                                         singleLine = true,
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = stepAccent, unfocusedBorderColor = stepAccent.copy(alpha = 0.58f),
+                                            focusedLabelColor = stepAccent, cursorColor = stepAccent,
+                                            focusedLeadingIconColor = stepAccent, unfocusedLeadingIconColor = stepAccent,
+                                            focusedContainerColor = stepAccent.copy(alpha = 0.10f),
+                                            unfocusedContainerColor = stepAccent.copy(alpha = 0.055f)
+                                        )
                                     )
                                 }
                                 1 -> {
-                                    StepHeading("صورة إشعار الحظر", "اختار لقطة شاشة واضحة من داخل واتساب. الفحص بيتم محليًا.")
+                                    StepHeading("صورة إشعار الحظر", "اختار لقطة شاشة واضحة من داخل واتساب. الفحص بيتم محليًا.", stepAccent)
                                     Button(
                                         onClick = { imagePicker.launch("image/*") },
                                         enabled = !busy,
@@ -298,34 +317,41 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                     if (imageAccepted) Text("تم التحقق من الإشعار بنجاح", color = Mint, fontWeight = FontWeight.Bold)
                                 }
                                 2 -> {
-                                    StepHeading("نوع الحظر", "اختار أقرب وصف للحالة الظاهرة عندك.")
-                                    ChoiceRow(listOf("حظر عادي" to "standard", "مؤقت أو متكرر" to "temporary", "حظر مشدد" to "severe"), severity) { severity = it }
+                                    StepHeading("نوع الحظر", "اختار أقرب وصف للحالة الظاهرة عندك.", stepAccent)
+                                    ChoiceRow(listOf("حظر عادي" to "standard", "مؤقت أو متكرر" to "temporary", "حظر مشدد" to "severe"), severity, stepAccent) { severity = it }
                                 }
                                 3 -> {
-                                    StepHeading("سبب الحظر", "لو مش متأكد من السبب، اختار لا أعرف.")
-                                    ChoiceRow(listOf("أعتقد أنه خطأ" to "mistake", "نشاط غير معتاد" to "unusual", "بلاغات أو شكاوى" to "reports", "مشكلة محتوى" to "content", "لا أعرف السبب" to "unknown", "سبب آخر" to "other"), reason) { reason = it }
+                                    StepHeading("سبب الحظر", "لو مش متأكد من السبب، اختار لا أعرف.", stepAccent)
+                                    ChoiceRow(listOf("أعتقد أنه خطأ" to "mistake", "نشاط غير معتاد" to "unusual", "بلاغات أو شكاوى" to "reports", "مشكلة محتوى" to "content", "لا أعرف السبب" to "unknown", "سبب آخر" to "other"), reason, stepAccent) { reason = it }
                                 }
                                 4 -> {
-                                    StepHeading("نوع المراجعة", "اختار الطريقة الأقرب لطلبك.")
-                                    ChoiceRow(listOf("مراجعة عادية" to "review", "مراجعة بشرية" to "human", "طلب عاجل" to "urgent", "توضيح السبب" to "explain"), requestType) { requestType = it }
+                                    StepHeading("نوع المراجعة", "اختار الطريقة الأقرب لطلبك.", stepAccent)
+                                    ChoiceRow(listOf("مراجعة عادية" to "review", "مراجعة بشرية" to "human", "طلب عاجل" to "urgent", "توضيح السبب" to "explain"), requestType, stepAccent) { requestType = it }
                                 }
                                 5 -> {
-                                    StepHeading("اكتب اسمك عشان يظهر في الخطاب", "اكتب الاسم الذي تريد ظهوره في الخطاب. (اختياري)")
+                                    StepHeading("اكتب اسمك عشان يظهر في الخطاب", "اكتب الاسم الذي تريد ظهوره في الخطاب. (اختياري)", stepAccent)
                                     OutlinedTextField(
                                         value = fullName,
                                         onValueChange = { fullName = it.take(60) },
                                         modifier = Modifier.fillMaxWidth(),
                                         label = { Text("اكتب اسمك") },
                                         leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null, tint = Mint) },
-                                        singleLine = true
+                                        singleLine = true,
+                                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = stepAccent, unfocusedBorderColor = stepAccent.copy(alpha = 0.58f),
+                                            focusedLabelColor = stepAccent, cursorColor = stepAccent,
+                                            focusedLeadingIconColor = stepAccent, unfocusedLeadingIconColor = stepAccent,
+                                            focusedContainerColor = stepAccent.copy(alpha = 0.10f),
+                                            unfocusedContainerColor = stepAccent.copy(alpha = 0.055f)
+                                        )
                                     )
                                 }
                                 6 -> {
-                                    StepHeading("صيغة الرسالة", "اختار شكل الخطاب الذي تريد إرساله.")
-                                    ChoiceRow(listOf("خطاب كامل" to "long", "رسالة قصيرة" to "short", "النسخة العربية" to "arabic", "متابعة بعد 48 ساعة" to "followup", "تصعيد الطلب" to "escalation", "إشعار أخير" to "final"), outputType) { outputType = it }
+                                    StepHeading("صيغة الرسالة", "اختار شكل الخطاب الذي تريد إرساله.", stepAccent)
+                                    ChoiceRow(listOf("خطاب كامل" to "long", "رسالة قصيرة" to "short", "النسخة العربية" to "arabic", "متابعة بعد 48 ساعة" to "followup", "تصعيد الطلب" to "escalation", "إشعار أخير" to "final"), outputType, stepAccent) { outputType = it }
                                 }
                                 else -> {
-                                    StepHeading("راجع بياناتك", "اضغط الزر لتجهيز رسالة المراجعة في تطبيق البريد.")
+                                    StepHeading("راجع بياناتك", "اضغط الزر لتجهيز رسالة المراجعة في تطبيق البريد.", stepAccent)
                                     SummaryLine("رقم الهاتف", phone)
                                     SummaryLine("نوع الحظر", severityLabel(severity))
                                     SummaryLine("السبب", reasonLabel(reason))
@@ -467,9 +493,9 @@ private fun AnimatedStageProgress(completedStages: Int, totalStages: Int) {
 }
 
 @androidx.compose.runtime.Composable
-private fun StepHeading(title: String, description: String) {
+private fun StepHeading(title: String, description: String, accent: Color = Mint) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        Text(title, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold, fontFamily = DisplayFont, textAlign = TextAlign.End)
+        Text(title, color = accent, fontSize = 24.sp, fontWeight = FontWeight.Bold, fontFamily = DisplayFont, textAlign = TextAlign.End)
         Text(description, color = Muted, fontSize = 14.sp, fontFamily = DisplayFont, textAlign = TextAlign.End, lineHeight = 22.sp)
     }
 }
@@ -483,7 +509,7 @@ private fun SummaryLine(label: String, value: String) {
 }
 
 @androidx.compose.runtime.Composable
-private fun ChoiceRow(options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
+private fun ChoiceRow(options: List<Pair<String, String>>, selected: String, accent: Color = Mint, onSelect: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
         options.forEach { (label, value) ->
             val active = selected == value
@@ -492,7 +518,7 @@ private fun ChoiceRow(options: List<Pair<String, String>>, selected: String, onS
                 Button(
                     onClick = { onSelect(value) },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black, contentColor = Mint)
+                    colors = ButtonDefaults.buttonColors(containerColor = accent.copy(alpha = 0.20f), contentColor = accent)
                  ) {
                     Text(label, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.width(8.dp))
@@ -504,7 +530,7 @@ private fun ChoiceRow(options: List<Pair<String, String>>, selected: String, onS
                 OutlinedButton(onClick = { onSelect(value) }, modifier = Modifier.fillMaxWidth()) {
                     Text(label)
                     Spacer(Modifier.width(8.dp))
-                    Icon(optionIcon, contentDescription = null, tint = Mint)
+                    Icon(optionIcon, contentDescription = null, tint = accent)
                 }
             }
         }
