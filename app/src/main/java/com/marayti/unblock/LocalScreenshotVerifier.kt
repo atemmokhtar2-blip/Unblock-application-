@@ -44,7 +44,7 @@ class LocalScreenshotVerifier(private val context: Context) {
                 return reject("محرك قراءة الصور غير جاهز على هذا الجهاز")
             }
             tess.setImage(bitmap)
-            val text = tess.utF8Text.orEmpty()
+            val text = tess.getUTF8Text().orEmpty()
             val confidence = tess.meanConfidence()
             evaluate(text, confidence)
         } catch (_: Exception) {
@@ -57,7 +57,7 @@ class LocalScreenshotVerifier(private val context: Context) {
 
     private fun evaluate(raw: String, confidence: Int): VerificationResult {
         val text = normalize(raw)
-        val tokens = Regex("[^\\W_]+", RegexOption.UNICODE).findAll(text).map { it.value }.toList()
+        val tokens = Regex("[\\p{L}\\p{N}]+").findAll(text).map { it.value }.toList()
         val arabic = Regex("[\\u0600-\\u06FF]").containsMatchIn(text)
         val signals = if (arabic) {
             Triple(
