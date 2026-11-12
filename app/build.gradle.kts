@@ -39,6 +39,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("com.rmtheis:tess-two:9.1.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
+    testImplementation("junit:junit:4.13.2")
 }
 
 // The APK bundles both OCR language models. They are downloaded at build time,
