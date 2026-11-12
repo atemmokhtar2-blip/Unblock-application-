@@ -332,7 +332,8 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                 }
                             }
                         },
-                        modifier = Modifier.weight(2f)
+                        modifier = Modifier.weight(2f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black, contentColor = Mint)
                     ) { if (step == 7) Text("فتح البريد وتجهيز الطلب") else HatemAnimatedLabel() }
                 }
             }
