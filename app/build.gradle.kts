@@ -14,7 +14,7 @@ android {
         applicationId = "com.marayti.unblock"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
+        versionCode = 3
         versionName = "1.1.0"
     }
 
@@ -25,13 +25,24 @@ android {
 
     buildFeatures { compose = true }
 
-    // R8 obfuscation and resource shrinking for release builds.
-    // CI debug signing is only for sideload testing, never Play Store production.
+    // A single persistent private key is required for install-over updates.
+    // Release signing credentials are supplied only through GitHub Actions secrets.
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+            if (!keystorePath.isNullOrBlank()) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
