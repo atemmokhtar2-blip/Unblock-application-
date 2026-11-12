@@ -390,14 +390,15 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                             if (error.isBlank()) {
                                 if (step < 7) {
                                     if (step == 6) {
+                                        val draftVariant = AppealTemplates.variantFor(phone)
                                         val message = runCatching {
                                             when (outputType) {
                                                 "short" -> AppealTemplates.buildShort(severity, phone, reason, requestType, evidence)
                                                 "arabic" -> AppealTemplates.buildArabic(severity, phone, reason, requestType, evidence, fullName.trim())
-                                                "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName.trim())
-                                                "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName.trim())
-                                                "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName.trim())
-                                                else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName.trim())
+                                                "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName.trim(), draftVariant)
+                                                "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName.trim(), draftVariant)
+                                                "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName.trim(), draftVariant)
+                                                else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName.trim(), draftVariant)
                                             }
                                         }.getOrElse { it.message ?: "تعذر تجهيز الرسالة" }
                                         val firstLine = message.lineSequence().firstOrNull().orEmpty()

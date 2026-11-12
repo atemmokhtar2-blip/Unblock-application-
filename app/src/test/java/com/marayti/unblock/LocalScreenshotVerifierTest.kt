@@ -39,4 +39,21 @@ class LocalScreenshotVerifierTest {
         )
         assertTrue(result.accepted)
     }
+
+    @Test
+    fun acceptsPermanentEnglishBanNotice() {
+        val result = verify(
+            "WhatsApp your account has been permanently banned because it violated our Terms of Service. This phone number is no longer allowed to use WhatsApp. Contact support to request a review.",
+            95
+        )
+        assertTrue(result.accepted)
+        assertTrue(result.restrictionType == "permanent")
+    }
+
+    @Test
+    fun rejectsForeignPlatformBanEvenWhenBanLanguagePresent() {
+        val result = verify("Your Facebook account has been banned for violating Community Standards. Request a review if you think this was a mistake.")
+        assertFalse(result.accepted)
+        assertTrue(result.message.contains("لا تحتوي على ما يثبت ارتباطها بواتساب"))
+    }
 }

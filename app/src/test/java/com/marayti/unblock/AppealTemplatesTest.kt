@@ -53,4 +53,23 @@ class AppealTemplatesTest {
         assertTrue(first != second)
         assertTrue(AppealTemplates.variantCount() > 100000L)
     }
+
+    @Test fun variantCountIsStrongerThanTheBot() {
+        // The bot's long-form engine offers 9,216,000 combinations; the app exceeds it.
+        assertEquals(48600000L, AppealTemplates.variantCount())
+    }
+
+    @Test fun buildingAcrossManyVariantsNeverThrows() {
+        for (v in 0 until 20000) {
+            val draft = AppealTemplates.build("standard", phone, "unknown", "review", variant = v)
+            assertTrue("variant $v missing phone number", draft.contains(phone))
+        }
+    }
+
+    @Test fun variantForProducesStableNonNegativeSeeds() {
+        val seed = AppealTemplates.variantFor(phone)
+        assertEquals(seed, AppealTemplates.variantFor(phone))
+        assertTrue(seed >= 0)
+        assertTrue(AppealTemplates.variantFor("01122334455") != AppealTemplates.variantFor("01012345678"))
+    }
 }
