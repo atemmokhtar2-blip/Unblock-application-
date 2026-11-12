@@ -698,10 +698,10 @@ private fun SettingsScreen(
                     Icon(Icons.Filled.Bolt, contentDescription = null, tint = Mint)
                     Text("إصدار التطبيق والتحديثات", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("الإصدار المثبت: ${displayedUpdateStatus.currentVersion} (رقم ${updateStatus.currentCode})", color = Color.White, textAlign = TextAlign.End)
-                Text("أحدث إصدار: ${updateStatus.latestVersion ?: "جارٍ التحقق"}", color = Muted, textAlign = TextAlign.End)
-                Text(updateStatus.message, color = if (updateStatus.downloaded) Mint else Muted, textAlign = TextAlign.End)
-                if (updateStatus.downloaded) {
+                Text("الإصدار المثبت: ${displayedUpdateStatus.currentVersion} (رقم ${displayedUpdateStatus.currentCode})", color = Color.White, textAlign = TextAlign.End)
+                Text("أحدث إصدار: ${displayedUpdateStatus.latestVersion ?: "جارٍ التحقق"}", color = Muted, textAlign = TextAlign.End)
+                Text(displayedUpdateStatus.message, color = if (displayedUpdateStatus.downloaded) Mint else Muted, textAlign = TextAlign.End)
+                if (displayedUpdateStatus.downloaded) {
                     Button(onClick = onInstallUpdate, modifier = Modifier.fillMaxWidth()) {
                         Text("تثبيت التحديث")
                     }
