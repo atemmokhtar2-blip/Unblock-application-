@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -174,7 +176,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
         } else {
             Column(
                 Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 24.dp),
-                verticalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalAlignment = Alignment.End
             ) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -182,7 +184,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                     OutlinedButton(onClick = { showSettings = true }) { Text("الإعدادات") }
                 }
 
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text("مساعد مراجعة الحساب", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
                     Text("هنمشي معاك خطوة بخطوة. بياناتك وصورك بتفضل على جهازك.", color = Muted, fontSize = 13.sp, textAlign = TextAlign.End)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -223,7 +225,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                         value = phone,
                                         onValueChange = { value -> phone = value.filter { it in '0'..'9' }.take(11); error = "" },
                                         modifier = Modifier.fillMaxWidth(),
-                                        label = { Text("رقم الهاتف المصري") },
+                                        label = { Text("رقم الهاتف") },
                                         placeholder = { Text("01xxxxxxxxx") },
                                         singleLine = true,
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
@@ -341,7 +343,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                             containerColor = if (step == 7) Color.Black else Color.Transparent,
                             contentColor = Mint
                         )
-                    ) { if (step == 7) Text("فتح البريد وتجهيز الطلب") else HatemAnimatedLabel() }
+                    ) { if (step == 7) Text("فتح البريد وتجهيز الطلب") else Text("متابعة", fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -421,7 +423,6 @@ private fun SettingsScreen(onBack: () -> Unit, onOpenTelegram: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(18.dp),
         horizontalAlignment = Alignment.End
     ) {
-        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("رجوع") }
         Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(24.dp)) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -437,6 +438,8 @@ private fun SettingsScreen(onBack: () -> Unit, onOpenTelegram: () -> Unit) {
                 Text("@K_J6k", color = Muted)
             }
         }
+        Spacer(Modifier.weight(1f))
+        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("رجوع") }
     }
 }
 
