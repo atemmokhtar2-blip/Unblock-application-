@@ -215,7 +215,7 @@ class AppUpdateWorker(
     }
 
     private fun performUpdate(): Result {
-        try {
+        return try {
             UpdateManager.resetProgress(applicationContext, "جارٍ الاتصال بخادم التحديث...")
             val manifest = getJson(UPDATE_MANIFEST_URL)
             UpdateManager.saveProgress(applicationContext, "تم الاتصال. جارٍ فحص رقم الإصدار...", 0)
