@@ -116,6 +116,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
     var severity by remember { mutableStateOf("standard") }
     var reason by remember { mutableStateOf("unknown") }
     var requestType by remember { mutableStateOf("review") }
+    var outputType by remember { mutableStateOf("long") }
     var imageStatus by remember { mutableStateOf("لم يتم اختيار صورة إشعار الحظر بعد") }
     var imageAccepted by remember { mutableStateOf(false) }
     var evidence by remember { mutableStateOf(VerificationResult(false, "")) }
@@ -179,10 +180,10 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                     Text("مساعد مراجعة الحساب", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
                     Text("هنمشي معاك خطوة بخطوة. بياناتك وصورك بتفضل على جهازك.", color = Muted, fontSize = 13.sp, textAlign = TextAlign.End)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Text("الخطوة ${(step + 1).coerceAtMost(6)} من 6", color = Mint, fontSize = 12.sp)
+                        Text("الخطوة ${(step + 1).coerceAtMost(8)} من 8", color = Mint, fontSize = 12.sp)
                     }
                     Box(Modifier.fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.10f), RoundedCornerShape(8.dp))) {
-                        Box(Modifier.fillMaxWidth((step + 1) / 6f).height(4.dp).background(Mint, RoundedCornerShape(8.dp)))
+                        Box(Modifier.fillMaxWidth((step + 1) / 8f).height(4.dp).background(Mint, RoundedCornerShape(8.dp)))
                     }
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -229,20 +230,28 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                 4 -> {
                                     StepHeading("05", "نوع المراجعة", "اختار الطريقة الأقرب لطلبك.")
                                     ChoiceRow(listOf("مراجعة عادية" to "review", "مراجعة بشرية" to "human", "طلب عاجل" to "urgent", "توضيح السبب" to "explain"), requestType) { requestType = it }
+                                }
+                                5 -> {
+                                    StepHeading("06", "اسم صاحب الحساب", "اكتب اسمك كما تحب أن يظهر في خطاب المراجعة. (اختياري)")
                                     OutlinedTextField(
                                         value = fullName,
                                         onValueChange = { fullName = it.take(60) },
                                         modifier = Modifier.fillMaxWidth(),
-                                        label = { Text("اسمك (اختياري)") },
+                                        label = { Text("الاسم الكامل") },
                                         singleLine = true
                                     )
                                 }
+                                6 -> {
+                                    StepHeading("07", "صيغة الرسالة", "اختار شكل الخطاب الذي تريد إرساله.")
+                                    ChoiceRow(listOf("خطاب كامل" to "long", "رسالة قصيرة" to "short", "النسخة العربية" to "arabic", "متابعة بعد 48 ساعة" to "followup", "تصعيد الطلب" to "escalation", "إشعار أخير" to "final"), outputType) { outputType = it }
+                                }
                                 else -> {
-                                    StepHeading("06", "راجع بياناتك", "اضغط الزر لتجهيز رسالة المراجعة في تطبيق البريد.")
+                                    StepHeading("08", "راجع بياناتك", "اضغط الزر لتجهيز رسالة المراجعة في تطبيق البريد.")
                                     SummaryLine("رقم الهاتف", phone)
                                     SummaryLine("نوع الحظر", severityLabel(severity))
                                     SummaryLine("السبب", reasonLabel(reason))
                                     SummaryLine("نوع المراجعة", requestLabel(requestType))
+                                    SummaryLine("صيغة الرسالة", outputLabel(outputType))
                                     SummaryLine("فحص الصورة", if (imageAccepted) "تم بنجاح" else "غير مكتمل")
                                     Text("هنفتح تطبيق البريد برسالة جاهزة. راجعها واضغط إرسال بنفسك؛ التطبيق مش بيبعت رسائل من غير إذنك.", color = Muted, fontSize = 12.sp, textAlign = TextAlign.End)
                                 }
@@ -264,9 +273,9 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                 else -> ""
                             }
                             if (error.isBlank()) {
-                                if (step < 5) step++ else {
+                                if (step < 7) step++ else {
                                     val message = runCatching {
-                                        AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)
+                                        when (outputType) {\n                                            "short" -> AppealTemplates.buildShort(severity, phone, reason, requestType, evidence)\n                                            "arabic" -> AppealTemplates.buildArabic(severity, phone, reason, requestType, evidence, fullName)\n                                            "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName)\n                                            "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName)\n                                            "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName)\n                                            else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)\n                                        }
                                     }.getOrElse { it.message ?: "تعذر تجهيز الرسالة" }
                                     val subject = message.lineSequence().firstOrNull()?.removePrefix("Subject: ") ?: "طلب مراجعة حساب واتساب"
                                     val body = message.substringAfter("\n\n", message)
@@ -284,7 +293,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                             }
                         },
                         modifier = Modifier.weight(2f)
-                    ) { Text(if (step == 5) "فتح البريد وتجهيز الطلب" else "متابعة") }
+                    ) { Text(if (step == 7) "فتح البريد وتجهيز الطلب" else "متابعة") }
                 }
             }
         }
@@ -388,4 +397,4 @@ private fun reasonLabel(value: String) = when (value) {
     "mistake" -> "أعتقد أنه خطأ"; "unusual" -> "نشاط غير معتاد"; "reports" -> "بلاغات أو شكاوى"
     "content" -> "مشكلة محتوى"; "other" -> "سبب آخر"; else -> "لا أعرف السبب"
 }
-private fun requestLabel(value: String) = when (value) { "human" -> "مراجعة بشرية"; "urgent" -> "طلب عاجل"; "explain" -> "توضيح السبب"; else -> "مراجعة عادية" }
+private fun requestLabel(value: String) = when (value) { "human" -> "مراجعة بشرية"; "urgent" -> "طلب عاجل"; "explain" -> "توضيح السبب"; else -> "مراجعة عادية" }\nprivate fun outputLabel(value: String) = when (value) { "short" -> "رسالة قصيرة"; "arabic" -> "النسخة العربية"; "followup" -> "متابعة"; "escalation" -> "تصعيد"; "final" -> "إشعار أخير"; else -> "خطاب كامل" }
