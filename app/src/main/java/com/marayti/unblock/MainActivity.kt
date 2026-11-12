@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -34,6 +35,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -171,14 +181,15 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
     }
 
     Box(Modifier.fillMaxSize()) {
-        if (step == 0 && !showSettings) {
+        if ((step == 0 || step == 1) && !showSettings) {
+            val stepBackground = if (step == 0) R.drawable.step_one_bg else R.drawable.step_two_bg
             Image(
-                painter = painterResource(R.drawable.step_one_bg),
+                painter = painterResource(stepBackground),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)))
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.24f)))
         } else {
             AnimatedBackdrop()
         }
@@ -193,7 +204,11 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                 horizontalAlignment = Alignment.End
             ) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedButton(onClick = { showSettings = true }) { Text("الإعدادات") }
+                    OutlinedButton(onClick = { showSettings = true }) {
+                        Icon(Icons.Filled.Settings, contentDescription = "الإعدادات")
+                        Spacer(Modifier.width(8.dp))
+                        Text("الإعدادات")
+                    }
                 }
 
                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -247,7 +262,11 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                         onClick = { imagePicker.launch("image/*") },
                                         enabled = !busy,
                                         modifier = Modifier.fillMaxWidth()
-                                    ) { Text(if (busy) "جاري فحص الصورة…" else "اختيار صورة من الهاتف") }
+                                     ) {
+                                        Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(if (busy) "جاري فحص الصورة…" else "اختيار صورة من الهاتف")
+                                    }
                                     Text(imageStatus, color = if (imageAccepted) Mint else Muted, textAlign = TextAlign.End)
                                     if (imageAccepted) Text("تم التحقق من الإشعار بنجاح", color = Mint, fontWeight = FontWeight.Bold)
                                 }
@@ -298,7 +317,11 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     if (step > 0) {
-                        OutlinedButton(onClick = { step--; error = "" }, modifier = Modifier.weight(1f)) { Text("رجوع") }
+                        OutlinedButton(onClick = { step--; error = "" }, modifier = Modifier.weight(1f)) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = null)
+                            Spacer(Modifier.width(6.dp))
+                            Text("رجوع")
+                        }
                     }
                     Button(
                         onClick = {
@@ -352,7 +375,17 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                             containerColor = if (step == 7) Color.Black else Color.Transparent,
                             contentColor = Mint
                         )
-                    ) { if (step == 7) Text("فتح البريد وتجهيز الطلب") else Text("متابعة", fontWeight = FontWeight.Bold) }
+                     ) {
+                        if (step == 7) {
+                            Icon(Icons.Filled.Send, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("فتح البريد وتجهيز الطلب")
+                        } else {
+                            Text("متابعة", fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(8.dp))
+                            Icon(Icons.Filled.ArrowForward, contentDescription = null)
+                        }
+                    }
                 }
             }
         }
@@ -402,7 +435,11 @@ private fun ChoiceRow(options: List<Pair<String, String>>, selected: String, onS
                     onClick = { onSelect(value) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Black, contentColor = Mint)
-                ) { Text(label, fontWeight = FontWeight.SemiBold) }
+                 ) {
+                    Text(label, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.Filled.CheckCircle, contentDescription = "محدد")
+                }
             } else {
                 OutlinedButton(onClick = { onSelect(value) }, modifier = Modifier.fillMaxWidth()) { Text(label) }
             }
@@ -432,18 +469,35 @@ private fun SettingsScreen(onBack: () -> Unit, onOpenTelegram: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(18.dp),
         horizontalAlignment = Alignment.End
     ) {
-        Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Icon(Icons.Filled.Settings, contentDescription = null, tint = Mint)
+            Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        }
         Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(24.dp)) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("عن التطبيق", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Filled.Info, contentDescription = null, tint = Mint)
+                    Text("عن التطبيق", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                }
                 Text("فحص محلي لصور إشعارات حظر واتساب وتجهيز طلب مراجعة. لا يتم رفع الصور إلى أي خادم.", color = Muted, textAlign = TextAlign.End)
             }
         }
         Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(24.dp)) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("المطور والدعم", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                Button(onClick = onOpenTelegram, modifier = Modifier.fillMaxWidth()) { Text("قناة المطور على تيليجرام") }
-                OutlinedButton(onClick = onOpenTelegram, modifier = Modifier.fillMaxWidth()) { Text("تواصل مع المطور") }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Filled.Send, contentDescription = null, tint = Mint)
+                    Text("المطور والدعم", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                }
+                Button(onClick = onOpenTelegram, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Filled.Send, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("قناة المطور على تيليجرام")
+                }
+                OutlinedButton(onClick = onOpenTelegram, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Filled.Send, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("تواصل مع المطور")
+                }
                 Text("@K_J6k", color = Muted)
             }
         }
