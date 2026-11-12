@@ -113,15 +113,23 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
             draft = ""
             imageStatus = "جاري فحص الصورة محليًا…"
             scope.launch {
-                val result = withContext(Dispatchers.IO) {
-                    val bytes = onReadImage(uri)
-                    if (bytes == null) VerificationResult(false, "تعذر قراءة الصورة من الهاتف")
-                    else LocalScreenshotVerifier(context).verify(bytes)
+                val result = try {
+                    withContext(Dispatchers.IO) {
+                        val bytes = onReadImage(uri)
+                        if (bytes == null) VerificationResult(false, "تعذر قراءة الصورة من الهاتف")
+                        else LocalScreenshotVerifier(context).verify(bytes)
+                    }
+                } catch (_: Exception) {
+                    VerificationResult(
+                        false,
+                        "تعذر فتح الصورة أو فحصها. جرّب صورة أخرى وتأكد من صلاحية الوصول للملف."
+                    )
+                } finally {
+                    busy = false
                 }
                 evidence = result
                 verdictAccepted = result.accepted
                 imageStatus = result.message
-                busy = false
             }
         }
     }
