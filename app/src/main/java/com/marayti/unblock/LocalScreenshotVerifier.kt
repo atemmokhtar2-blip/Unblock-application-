@@ -59,7 +59,7 @@ class LocalScreenshotVerifier(private val context: Context) {
                 if (!initialized) {
                     return reject("لم يتمكن محرك القراءة من تحميل اللغتين العربية والإنجليزية. أعد تثبيت التطبيق ثم حاول مجددًا.")
                 }
-                tess.setPageSegMode(TessBaseAPI.PageSegMode.AUTO)
+                tess.setPageSegMode(TessBaseAPI.PageSegMode.PSM_AUTO)
                 tess.setImage(bitmap)
                 val recognized = tess.getUTF8Text().orEmpty()
                 if (recognized.isBlank()) return reject("الصورة واضحة لكن لم يتم استخراج نص منها. جرّب لقطة شاشة كاملة.")
