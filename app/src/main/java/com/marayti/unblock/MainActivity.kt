@@ -626,7 +626,7 @@ private fun AnimatedBackdrop(useRedTheme: Boolean = false, useSettingsTheme: Boo
     Canvas(Modifier.fillMaxSize()) {
         drawRect(brush = Brush.linearGradient(
             colors = when {
-                useSettingsTheme -> listOf(Color(0xFF090817), Color(0xFF17102F), Color(0xFF082C35), Color(0xFF32132F), Color(0xFF090817))
+                useSettingsTheme -> listOf(Color(0xFF101512), Color(0xFF1B2822), Color(0xFF30251B), Color(0xFF241B28), Color(0xFF101512))
                 useRedTheme -> listOf(Color(0xFF020203), Color(0xFF16070B), Color(0xFF350B16), Color(0xFF080609))
                 else -> listOf(Color(0xFF07131F), Color(0xFF102A38), Color(0xFF11152B))
             },
@@ -634,9 +634,9 @@ private fun AnimatedBackdrop(useRedTheme: Boolean = false, useSettingsTheme: Boo
             end = androidx.compose.ui.geometry.Offset(size.width, size.height)
         ))
         if (useSettingsTheme) {
-            drawCircle(Color(0x665F35C9), radius = size.minDimension * 0.58f,
+            drawCircle(Color(0x5549A887), radius = size.minDimension * 0.58f,
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.04f, size.height * 0.16f))
-            drawCircle(Color(0x5540D9B0), radius = size.minDimension * 0.52f,
+            drawCircle(Color(0x55D6A45D), radius = size.minDimension * 0.52f,
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.98f, size.height * 0.34f))
             drawCircle(Color(0x55C49A61), radius = size.minDimension * 0.48f,
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.12f, size.height * 0.94f))
@@ -685,7 +685,7 @@ private fun SettingsScreen(
             Icon(Icons.Filled.Settings, contentDescription = null, tint = Color(0xFF7CF7E2), modifier = Modifier.rotate(settingsTitleRotation))
             Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1B2744)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFF39DCC3), Color(0xFFEC70C5))))) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF252B27)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFF65C69A).copy(alpha = 0.55f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Info, contentDescription = null, tint = Mint)
@@ -694,7 +694,7 @@ private fun SettingsScreen(
                 Text("فحص محلي لصور إشعارات حظر واتساب وتجهيز طلب مراجعة. لا يتم رفع الصور إلى أي خادم.", color = Muted, textAlign = TextAlign.End)
             }
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF10313D)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFF4CCDBB).copy(alpha = 0.55f))) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF19382F)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFF72D6A8).copy(alpha = 0.60f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Bolt, contentDescription = null, tint = Mint)
@@ -738,7 +738,7 @@ private fun SettingsScreen(
                 }
             }
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF25213F)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFF9B83E8).copy(alpha = 0.35f))) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF33252C)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFFD69A72).copy(alpha = 0.50f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Send, contentDescription = null, tint = Mint)
