@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.provider.Settings
 import androidx.core.app.NotificationCompat
@@ -58,7 +60,16 @@ object UpdateScheduler {
     }
 
     fun checkNow(context: Context) {
-        UpdateManager.saveChecking(context)
+        val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork = connectivity.activeNetwork
+        val capabilities = activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
+        val hasInternet = capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        if (hasInternet) {
+            UpdateManager.saveChecking(context)
+        } else {
+            UpdateManager.saveWaitingForNetwork(context)
+        }
         val request = OneTimeWorkRequestBuilder<AppUpdateWorker>()
             .setConstraints(
                 Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
@@ -112,6 +123,14 @@ object UpdateManager {
         val prefs = preferences(context)
         val path = prefs.getString(KEY_APK_PATH, null) ?: return false
         return prefs.getInt(KEY_LATEST_CODE, 0) == versionCode && File(path).isFile && File(path).length() > 0L
+    }
+
+    internal fun saveWaitingForNetwork(context: Context) {
+        preferences(context).edit()
+            .putBoolean(KEY_CHECKING, false)
+            .putInt(KEY_PROGRESS, 0)
+            .putString(KEY_MESSAGE, "لا يوجد اتصال بالإنترنت. سيتم فحص التحديثات تلقائيًا عند عودة الاتصال.")
+            .apply()
     }
 
     internal fun saveChecking(context: Context) {
