@@ -96,6 +96,8 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
     var reason by remember { mutableStateOf("unknown") }
     var requestType by remember { mutableStateOf("review") }
     var phone by remember { mutableStateOf("") }
+    var fullName by remember { mutableStateOf("") }
+    var outputType by remember { mutableStateOf("long") }
     var imageStatus by remember { mutableStateOf("لم يتم فحص صورة بعد") }
     var verdictAccepted by remember { mutableStateOf(false) }
     var evidence by remember { mutableStateOf(VerificationResult(false, "")) }
@@ -146,6 +148,14 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
         ChoiceCard("02  ·  نوع الحالة", listOf("حظر عادي" to "standard", "حظر مؤقت أو متكرر" to "temporary", "حظر مشدد" to "severe"), severity) { severity = it }
         ChoiceCard("03  ·  السبب الأقرب", listOf("أعتقد أنه خطأ" to "mistake", "نشاط غير معتاد" to "unusual", "بلاغات أو شكاوى" to "reports", "مشكلة محتوى" to "content", "لا أعرف السبب" to "unknown", "سبب آخر" to "other"), reason) { reason = it }
         ChoiceCard("04  ·  نوع الطلب", listOf("مراجعة عادية" to "review", "مراجعة بشرية" to "human", "طلب عاجل" to "urgent", "توضيح السبب" to "explain"), requestType) { requestType = it }
+        ChoiceCard("05  ·  صيغة الطلب", listOf("خطاب كامل" to "long", "طلب قصير داخل واتساب" to "short", "النسخة العربية" to "arabic", "متابعة بعد 48 ساعة" to "followup", "تصعيد" to "escalation", "إشعار أخير" to "final"), outputType) { outputType = it }
+        OutlinedTextField(
+            value = fullName,
+            onValueChange = { fullName = it.take(60) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("الاسم (اختياري)") },
+            singleLine = true
+        )
         OutlinedTextField(
             value = phone,
             onValueChange = { phone = it.filter(Char::isDigit).take(11) },
@@ -158,7 +168,16 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
             draft = when {
                 !verdictAccepted -> "افحص أولًا صورة إشعار حظر واتساب الصحيحة."
                 !phone.matches(Regex("01[0125][0-9]{8}")) -> "راجع الرقم: يجب أن يتكون من 11 رقمًا ويبدأ بـ 010 أو 011 أو 012 أو 015."
-                else -> AppealTemplates.build(severity, phone, reason, requestType, evidence)
+                else -> runCatching {
+                    when (outputType) {
+                        "short" -> AppealTemplates.buildShort(severity, phone, reason, requestType, evidence)
+                        "arabic" -> AppealTemplates.buildArabic(severity, phone, reason, requestType, evidence, fullName)
+                        "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName)
+                        "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName)
+                        "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName)
+                        else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)
+                    }
+                }.getOrElse { it.message ?: "تعذر إنشاء المسودة، راجع البيانات." }
             }
         }, modifier = Modifier.fillMaxWidth()) { Text("إنشاء طلب المراجعة") }
         if (draft.isNotBlank()) {
