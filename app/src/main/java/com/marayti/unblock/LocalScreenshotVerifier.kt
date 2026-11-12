@@ -34,7 +34,6 @@ class LocalScreenshotVerifier(private val context: Context) {
 
         val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
             ?: return reject("تعذر فتح ملف الصورة")
-        val tess = TessBaseAPI()
         return try {
             val dataRoot = File(context.filesDir, "tesseract")
             val tessdata = File(dataRoot, "tessdata")
@@ -47,17 +46,29 @@ class LocalScreenshotVerifier(private val context: Context) {
                     }
                 }
             }
-            if (!tess.init(dataRoot.absolutePath, "eng+ara")) {
-                return reject("محرك قراءة الصور غير جاهز على هذا الجهاز")
+            if (!hasImageContent(bitmap)) return reject("الصورة فارغة أو غير واضحة")
+            val results = mutableListOf<VerificationResult>()
+            listOf("eng", "ara").forEach { language ->
+                val tess = TessBaseAPI()
+                try {
+                    if (tess.init(dataRoot.absolutePath, language)) {
+                        tess.setImage(bitmap)
+                        val text = tess.getUTF8Text().orEmpty()
+                        if (text.isNotBlank()) results += evaluate(text, tess.meanConfidence())
+                    }
+                } finally {
+                    try { tess.end() } catch (_: Exception) { }
+                }
             }
-            tess.setImage(bitmap)
-            val text = tess.getUTF8Text().orEmpty()
-            val confidence = tess.meanConfidence()
-            evaluate(text, confidence)
+            results.firstOrNull { it.accepted }?.let { accepted ->
+                return accepted
+            }
+            results.maxByOrNull { result ->
+                Regex("[\\p{L}\\p{N}]+").findAll(result.recognizedText).count()
+            } ?: reject("لم يتمكن محرك القراءة من استخراج نص واضح من الصورة")
         } catch (_: Exception) {
-            reject("تعذر تشغيل فحص الصور محليًا. أعد المحاولة بصورة أوضح.")
+            reject("تعذر تشغيل فحص الصور محليًا. تأكد من اكتمال ملفات اللغة ثم أعد المحاولة.")
         } finally {
-            try { tess.end() } catch (_: Exception) { }
             bitmap.recycle()
         }
     }
@@ -75,8 +86,8 @@ class LocalScreenshotVerifier(private val context: Context) {
         } else {
             Triple(
                 listOf("whatsapp", "whats app"),
-                listOf("temporarily banned", "permanently banned", "banned", "suspended", "suspension", "this account is not allowed", "no longer allowed", "not allowed to use", "cannot use whatsapp", "temporarily blocked", "deactivated", "terminated", "disabled", "restricted", "restriction", "account locked", "your phone number is banned", "account banned"),
-                listOf("terms of service", "terms and conditions", "terms", "policy", "policies", "violation", "violated", "violating", "violate", "request a review", "review", "appeal", "help center", "learn more", "spam", "automated", "automation", "bulk", "illegal", "unsolicited", "guidelines", "account activity", "suspicious activity", "suspicious", "community standards", "contact us", "support", "misuse", "abuse")
+                listOf("temporarily banned", "permanently banned", "banned", "bans", "banning", "ban", "suspended", "suspension", "this account is not allowed", "no longer allowed", "not allowed to use", "cannot use whatsapp", "account has been banned", "account is banned", "account was banned", "account has been disabled", "account has been suspended", "temporarily blocked", "deactivated", "terminated", "disabled", "restricted", "restriction", "account locked", "your phone number is banned", "account banned"),
+                listOf("terms of service", "terms and conditions", "terms", "term", "policy", "policies", "violation", "violated", "violating", "violate", "request a review", "review", "appeal", "help center", "learn more", "spam", "automated", "automation", "bulk", "illegal", "unsolicited", "guidelines", "account activity", "suspicious activity", "suspicious", "community standards", "contact us", "support", "misuse", "abuse")
             )
         }
         val foreign = if (arabic) listOf("تيليجرام", "تليجرام", "فيسبوك", "انستجرام", "تويتر", "سناب", "تيك توك", "ديسكورد", "سكايب", "فايبر")
@@ -97,12 +108,39 @@ class LocalScreenshotVerifier(private val context: Context) {
                 confidence = confidence,
                 date = extractDate(text),
                 phone = extractPhone(text),
-                restrictionType = if (listOf("permanent", "دائم").any { text.contains(it) }) "permanent" else if (listOf("temporary", "مؤقت").any { text.contains(it) }) "temporary" else "standard",
+                restrictionType = if (listOf("permanent", "permanently", "دائم", "نهائي").any { text.contains(it) }) "permanent" else if (listOf("temporary", "temporarily", "مؤقت").any { text.contains(it) }) "temporary" else "",
                 restrictionReason = extractReason(text, arabic)
             )
         } else {
             VerificationResult(false, "لم يتم قبول الصورة: " + failures.joinToString("، "), raw, confidence)
         }
+    }
+
+    private fun hasImageContent(bitmap: android.graphics.Bitmap): Boolean {
+        val stepX = (bitmap.width / 64).coerceAtLeast(1)
+        val stepY = (bitmap.height / 64).coerceAtLeast(1)
+        var count = 0
+        var sum = 0.0
+        var sumSquares = 0.0
+        var y = 0
+        while (y < bitmap.height) {
+            var x = 0
+            while (x < bitmap.width) {
+                val color = bitmap.getPixel(x, y)
+                val gray = (android.graphics.Color.red(color) * 0.299 +
+                    android.graphics.Color.green(color) * 0.587 +
+                    android.graphics.Color.blue(color) * 0.114)
+                sum += gray
+                sumSquares += gray * gray
+                count++
+                x += stepX
+            }
+            y += stepY
+        }
+        if (count == 0) return false
+        val mean = sum / count
+        val variance = (sumSquares / count) - mean * mean
+        return kotlin.math.sqrt(variance.coerceAtLeast(0.0)) >= 10.0
     }
 
     private fun containsSignal(text: String, tokens: List<String>, phrase: String): Boolean {
