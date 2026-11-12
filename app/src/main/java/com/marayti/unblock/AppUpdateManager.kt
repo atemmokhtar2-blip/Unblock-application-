@@ -144,6 +144,14 @@ object UpdateManager {
             .apply()
     }
 
+    internal fun resetProgress(context: Context, message: String) {
+        preferences(context).edit()
+            .putBoolean(KEY_CHECKING, true)
+            .putInt(KEY_PROGRESS, 0)
+            .putString(KEY_MESSAGE, message)
+            .apply()
+    }
+
     internal fun saveProgress(context: Context, message: String, progress: Int) {
         val prefs = preferences(context)
         val requested = progress.coerceIn(0, 100)
@@ -206,7 +214,7 @@ class AppUpdateWorker(
 
     private fun performUpdate(): Result {
         try {
-            UpdateManager.saveProgress(applicationContext, "جارٍ الاتصال بخادم التحديث...", 0)
+            UpdateManager.resetProgress(applicationContext, "جارٍ الاتصال بخادم التحديث...")
             val manifest = getJson(UPDATE_MANIFEST_URL)
             UpdateManager.saveProgress(applicationContext, "تم الاتصال. جارٍ فحص رقم الإصدار...", 0)
             val versionName = manifest.getString("versionName")
@@ -234,15 +242,16 @@ class AppUpdateWorker(
             val checksum = manifest.optString("checksumUrl").takeIf { it.startsWith("https://") }
             UpdateManager.saveProgress(applicationContext, "يوجد تحديث جديد. جارٍ تنزيل ملف التطبيق...", 0)
             val targetDir = File(applicationContext.filesDir, "updates").apply { mkdirs() }
-            val temporary = File(targetDir, "update.apk.part")
-            val target = File(targetDir, "update.apk")
+            val temporary = File(targetDir, "update-$versionCode.apk.part")
+            val target = File(targetDir, "update-$versionCode.apk")
             temporary.delete()
+            UpdateManager.preferences(applicationContext).edit().remove("apk_path").apply()
             download(apk, temporary) { percent ->
                 UpdateManager.saveProgress(applicationContext, "جارٍ تنزيل التحديث... $percent%", percent)
             }
             UpdateManager.saveProgress(applicationContext, "اكتمل التنزيل. جارٍ التحقق من سلامة الملف...", 100)
             val expectedHash = (expectedHashFromManifest ?: checksum?.let { readChecksum(it) }
-                ?.trim()?.substringBefore(Regex("\\s").toRegex()))
+                ?.trim()?.split(Regex("\\s+"))?.firstOrNull())
                 ?.lowercase(Locale.US)
                 ?: throw SecurityException("بصمة SHA-256 غير موجودة أو غير صالحة في بيانات التحديث.")
             val actualHash = sha256(temporary)
@@ -333,8 +342,13 @@ class AppUpdateWorker(
                     }
                 }
             }
+            if (expectedLength > 0L && total != expectedLength) {
+                destination.delete()
+                throw IllegalStateException("اكتمل الاتصال لكن حجم الملف لا يطابق الحجم المعلن؛ أُعيد رفض التنزيل.")
+            }
             onProgress(100)
             if (destination.length() < 1_000_000L) {
+                destination.delete()
                 throw IllegalStateException("ملف التحديث غير مكتمل.")
             }
         } finally {
