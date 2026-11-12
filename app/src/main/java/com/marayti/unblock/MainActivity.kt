@@ -207,7 +207,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                     }.sortedBy { it.first }.toTypedArray()
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        border = BorderStroke(2.dp, Brush.sweepGradient(movingStops)),
+                        border = BorderStroke(2.dp, Brush.sweepGradient(*movingStops)),
                         colors = CardDefaults.cardColors(containerColor = Panel.copy(alpha = 0.97f)),
                         shape = RoundedCornerShape(28.dp)
                     ) {
