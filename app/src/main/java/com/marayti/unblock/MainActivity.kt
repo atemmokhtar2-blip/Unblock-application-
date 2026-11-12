@@ -282,8 +282,14 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                             "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName)
                                             "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName)\n                                            else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)\n                                        }
                                     }.getOrElse { it.message ?: "تعذر تجهيز الرسالة" }
-                                    val subject = message.lineSequence().firstOrNull()?.removePrefix("Subject: ") ?: "طلب مراجعة حساب واتساب"
-                                    val body = message.substringAfter("\n\n", message)
+                                    val firstLine = message.lineSequence().firstOrNull().orEmpty()
+                                    val hasSubject = firstLine.startsWith("Subject:") || firstLine.startsWith("الموضوع:")
+                                    val subject = when {
+                                        firstLine.startsWith("Subject:") -> firstLine.removePrefix("Subject:").trim()
+                                        firstLine.startsWith("الموضوع:") -> firstLine.removePrefix("الموضوع:").trim()
+                                        else -> "WhatsApp account review request - $phone"
+                                    }
+                                    val body = if (hasSubject) message.substringAfter("\n\n", "") else message
                                     val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
                                         data = Uri.parse("mailto:support@whatsapp.com")
                                         putExtra(Intent.EXTRA_SUBJECT, subject)
