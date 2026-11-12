@@ -8,6 +8,17 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.drawCircle
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -103,6 +114,7 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
     var evidence by remember { mutableStateOf(VerificationResult(false, "")) }
     var draft by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -134,12 +146,25 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
         }
     }
 
+    Box(Modifier.fillMaxSize()) {
+        AnimatedBackdrop()
+        if (showSettings) {
+            SettingsScreen(
+                onBack = { showSettings = false },
+                onOpenTelegram = {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/K_J6k")))
+                }
+            )
+        } else {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.End
     ) {
-        Text("UNBLOCK  ·  WHATSAPP", color = Mint, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("UNBLOCK  ·  WHATSAPP", color = Mint, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            OutlinedButton(onClick = { showSettings = true }) { Text("الإعدادات") }
+        }
         Text("جهّز طلب مراجعتك بثقة", color = Color.White, fontSize = 29.sp, fontWeight = FontWeight.ExtraBold)
         Text("أدواتك تعمل على هاتفك. صورك لا تُرفع إلى أي خادم.", color = Muted, fontSize = 14.sp)
         Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(22.dp)) {
@@ -202,6 +227,70 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
             }
         }
         Text("خصوصيتك أولًا · الفحص محلي على جهازك", color = Muted, fontSize = 12.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+    }
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun AnimatedBackdrop() {
+    val transition = rememberInfiniteTransition(label = "ambient-background")
+    val driftA by transition.animateFloat(
+        initialValue = 0f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(9000), RepeatMode.Reverse),
+        label = "drift-a"
+    )
+    val driftB by transition.animateFloat(
+        initialValue = 1f, targetValue = 0f,
+        animationSpec = infiniteRepeatable(tween(12000), RepeatMode.Reverse),
+        label = "drift-b"
+    )
+    Canvas(Modifier.fillMaxSize()) {
+        drawRect(brush = androidx.compose.ui.graphics.Brush.linearGradient(
+            colors = listOf(Color(0xFF07131F), Color(0xFF102A38), Color(0xFF17152F)),
+            start = Offset(0f, 0f), end = Offset(size.width, size.height)
+        ))
+        drawCircle(Color(0x3338E8C0), radius = size.minDimension * 0.48f,
+            center = Offset(size.width * (0.12f + 0.18f * driftA), size.height * 0.18f))
+        drawCircle(Color(0x333D8BFF), radius = size.minDimension * 0.42f,
+            center = Offset(size.width * (0.88f - 0.16f * driftB), size.height * 0.72f))
+        drawCircle(Color(0x224E36A8), radius = size.minDimension * 0.34f,
+            center = Offset(size.width * 0.52f, size.height * (0.45f + 0.10f * driftA)))
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun SettingsScreen(onBack: () -> Unit, onOpenTelegram: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.End
+    ) {
+        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("رجوع للرئيسية") }
+        Text("الإعدادات", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
+        Card(colors = CardDefaults.cardColors(containerColor = Panel.copy(alpha = 0.94f)), shape = RoundedCornerShape(24.dp)) {
+            Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End) {
+                Text("عن التطبيق", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                Text("UNBLOCK", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                Text("أداة محلية لمراجعة لقطات إشعارات حظر واتساب وتجهيز مسودة طلب المراجعة.", color = Muted, textAlign = TextAlign.End)
+                Spacer(Modifier.height(8.dp))
+                Text("خصوصيتك محفوظة: فحص الصور يتم على جهازك ولا يتم رفعها إلى خادم خارجي.", color = Mint, textAlign = TextAlign.End)
+            }
+        }
+        Card(colors = CardDefaults.cardColors(containerColor = Panel.copy(alpha = 0.94f)), shape = RoundedCornerShape(24.dp)) {
+            Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End) {
+                Text("المطور والدعم", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = onOpenTelegram, modifier = Modifier.fillMaxWidth()) {
+                    Text("قناة المطور على تيليجرام")
+                }
+                OutlinedButton(onClick = onOpenTelegram, modifier = Modifier.fillMaxWidth()) {
+                    Text("تواصل مع المطور")
+                }
+                Text("@K_J6k", color = Muted, fontSize = 13.sp)
+            }
+        }
+        Text("الإصدار التجريبي · يعمل محليًا", color = Muted, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
     }
 }
 
