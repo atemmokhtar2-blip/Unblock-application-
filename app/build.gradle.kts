@@ -23,7 +23,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 
     // A single persistent private key is required for install-over updates.
     // Release signing credentials are supplied only through GitHub Actions secrets.
