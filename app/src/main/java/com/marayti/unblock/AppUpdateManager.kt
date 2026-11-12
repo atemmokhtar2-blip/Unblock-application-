@@ -221,7 +221,12 @@ class AppUpdateWorker(
             val versionCode = manifest.getInt("versionCode")
             val lastKnownCode = UpdateManager.preferences(applicationContext).getInt("latest_code", 0)
             if (versionCode <= BuildConfig.VERSION_CODE) {
-                UpdateManager.saveNoUpdate(applicationContext, versionName, versionCode)
+                val installedVersionName = if (versionCode < BuildConfig.VERSION_CODE) {
+                    BuildConfig.VERSION_NAME
+                } else versionName
+                UpdateManager.saveNoUpdate(
+                    applicationContext, installedVersionName, BuildConfig.VERSION_CODE
+                )
                 return Result.success()
             }
             if (versionCode < lastKnownCode) {
@@ -248,6 +253,11 @@ class AppUpdateWorker(
             UpdateManager.preferences(applicationContext).edit().remove("apk_path").apply()
             download(apk, temporary) { percent ->
                 UpdateManager.saveProgress(applicationContext, "جارٍ تنزيل التحديث... $percent%", percent)
+            }
+            val manifestSize = manifest.optLong("apkSizeBytes", -1L)
+            if (manifestSize > 0L && temporary.length() != manifestSize) {
+                temporary.delete()
+                throw SecurityException("حجم ملف APK لا يطابق الحجم المسجل في بيان التحديث.")
             }
             UpdateManager.saveProgress(applicationContext, "اكتمل التنزيل. جارٍ التحقق من سلامة الملف...", 100)
             val expectedHash = (expectedHashFromManifest ?: checksum?.let { readChecksum(it) }
@@ -293,9 +303,11 @@ class AppUpdateWorker(
         val connection = (URL(address).openConnection() as HttpURLConnection).apply {
             connectTimeout = 15000
             readTimeout = 20000
+            useCaches = false
             setRequestProperty("Accept", "application/vnd.github+json")
             setRequestProperty("User-Agent", "UNBLOCK-Android-Updater")
-            setRequestProperty("Cache-Control", "no-cache")
+            setRequestProperty("Cache-Control", "no-cache, no-store")
+            setRequestProperty("Pragma", "no-cache")
         }
         return try {
             if (connection.responseCode !in 200..299) {
