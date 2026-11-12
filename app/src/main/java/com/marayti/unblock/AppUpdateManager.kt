@@ -64,7 +64,7 @@ object UpdateScheduler {
         val activeNetwork = connectivity.activeNetwork
         val capabilities = activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
         val hasInternet = capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
-            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
         if (hasInternet) {
             UpdateManager.saveChecking(context)
         } else {
