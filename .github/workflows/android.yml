@@ -1,6 +1,9 @@
 name: Android build
 # Fresh verification run after repository signing secrets were added
 
+permissions:
+  contents: write
+
 concurrency:
   group: android-${{ github.ref }}
   cancel-in-progress: true
@@ -103,6 +106,32 @@ jobs:
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/mapping/release/mapping.txt
+      - name: Prepare versioned release assets
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.HAS_RELEASE_SIGNING == 'true' }}
+        id: release_version
+        shell: bash
+        run: |
+          VERSION_NAME=$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -1)
+          VERSION_CODE=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle.kts | head -1)
+          test -n "$VERSION_NAME" && test -n "$VERSION_CODE"
+          mkdir -p release-assets
+          cp app/build/outputs/apk/release/app-release.apk release-assets/unblock-release.apk
+          cd release-assets
+          sha256sum unblock-release.apk > unblock-release.apk.sha256
+          echo "name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+      - name: Publish signed APK as the official update release
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.HAS_RELEASE_SIGNING == 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: unblock-v${{ steps.release_version.outputs.name }}-${{ steps.release_version.outputs.code }}
+          name: UNBLOCK v${{ steps.release_version.outputs.name }}
+          target_commitish: main
+          make_latest: true
+          generate_release_notes: true
+          files: |
+            release-assets/unblock-release.apk
+            release-assets/unblock-release.apk.sha256
       - name: Explain missing signing secrets
         if: ${{ github.event_name != 'pull_request' && env.HAS_RELEASE_SIGNING != 'true' }}
         run: echo "Release APK skipped. Add the four ANDROID_* signing secrets to enable persistent signed releases."
