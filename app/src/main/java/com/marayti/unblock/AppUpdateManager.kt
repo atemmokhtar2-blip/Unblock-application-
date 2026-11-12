@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
+import java.io.RandomAccessFile
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
@@ -78,7 +79,7 @@ object UpdateScheduler {
         // A manual check must always start a fresh worker. KEEP can silently
         // preserve a stale/failed request and make the Settings button appear broken.
         WorkManager.getInstance(context).enqueueUniqueWork(
-            IMMEDIATE_NAME, ExistingWorkPolicy.REPLACE, request
+            IMMEDIATE_NAME, ExistingWorkPolicy.KEEP, request
         )
     }
 }
@@ -136,17 +137,20 @@ object UpdateManager {
     }
 
     internal fun saveChecking(context: Context) {
+        // Preserve the visible progress if a worker is already downloading.
         preferences(context).edit()
             .putBoolean(KEY_CHECKING, true)
-            .putInt(KEY_PROGRESS, 0)
             .putString(KEY_MESSAGE, "جارٍ الاتصال بخادم التحديث...")
             .apply()
     }
 
     internal fun saveProgress(context: Context, message: String, progress: Int) {
-        preferences(context).edit()
+        val prefs = preferences(context)
+        val requested = progress.coerceIn(0, 100)
+        val previous = prefs.getInt(KEY_PROGRESS, 0)
+        prefs.edit()
             .putBoolean(KEY_CHECKING, true)
-            .putInt(KEY_PROGRESS, progress.coerceIn(0, 100))
+            .putInt(KEY_PROGRESS, maxOf(previous, requested))
             .putString(KEY_MESSAGE, message)
             .apply()
     }
@@ -193,29 +197,41 @@ class AppUpdateWorker(
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        val lockDirectory = File(applicationContext.filesDir, "updates").apply { mkdirs() }
+        val lockFile = File(lockDirectory, "update-worker.lock")
+        RandomAccessFile(lockFile, "rw").channel.use { channel ->
+            channel.lock().use { performUpdate() }
+        }
+    }
+
+    private fun performUpdate(): Result {
         try {
             UpdateManager.saveProgress(applicationContext, "جارٍ الاتصال بخادم التحديث...", 0)
             val manifest = getJson(UPDATE_MANIFEST_URL)
             UpdateManager.saveProgress(applicationContext, "تم الاتصال. جارٍ فحص رقم الإصدار...", 0)
             val versionName = manifest.getString("versionName")
             val versionCode = manifest.getInt("versionCode")
+            val lastKnownCode = UpdateManager.preferences(applicationContext).getInt("latest_code", 0)
             if (versionCode <= BuildConfig.VERSION_CODE) {
                 UpdateManager.saveNoUpdate(applicationContext, versionName, versionCode)
-                return@withContext Result.success()
+                return Result.success()
+            }
+            if (versionCode < lastKnownCode) {
+                throw SecurityException("رفض إصدار أقدم من آخر إصدار موثوق.")
             }
             if (UpdateManager.hasDownloadedVersion(applicationContext, versionCode)) {
                 UpdateManager.apkFile(applicationContext)?.let { existingApk ->
                     UpdateManager.saveAvailable(applicationContext, versionName, versionCode, existingApk)
                 }
-                return@withContext Result.success()
+                return Result.success()
             }
 
             val apk = manifest.optString("apkUrl")
                 .takeIf { it.startsWith("https://") }
                 ?: throw IllegalStateException("رابط ملف APK غير موجود في ملف التحديث.")
-            val checksum = manifest.optString("checksumUrl")
-                .takeIf { it.startsWith("https://") }
-                ?: throw IllegalStateException("رابط ملف التحقق غير موجود في ملف التحديث.")
+            val expectedHashFromManifest = manifest.optString("sha256")
+                .takeIf { it.matches(Regex("^[a-fA-F0-9]{64}$")) }
+            val checksum = manifest.optString("checksumUrl").takeIf { it.startsWith("https://") }
             UpdateManager.saveProgress(applicationContext, "يوجد تحديث جديد. جارٍ تنزيل ملف التطبيق...", 0)
             val targetDir = File(applicationContext.filesDir, "updates").apply { mkdirs() }
             val temporary = File(targetDir, "update.apk.part")
@@ -225,11 +241,30 @@ class AppUpdateWorker(
                 UpdateManager.saveProgress(applicationContext, "جارٍ تنزيل التحديث... $percent%", percent)
             }
             UpdateManager.saveProgress(applicationContext, "اكتمل التنزيل. جارٍ التحقق من سلامة الملف...", 100)
-            val expectedHash = readChecksum(checksum).trim().substringBefore(" ").lowercase(Locale.US)
+            val expectedHash = (expectedHashFromManifest ?: checksum?.let { readChecksum(it) }
+                ?.trim()?.substringBefore(Regex("\\s").toRegex()))
+                ?.lowercase(Locale.US)
+                ?: throw SecurityException("بصمة SHA-256 غير موجودة أو غير صالحة في بيانات التحديث.")
             val actualHash = sha256(temporary)
-            if (!expectedHash.matches(Regex("^[a-f0-9]{64}$")) || expectedHash != actualHash) {
+            if (expectedHash != actualHash) {
                 temporary.delete()
                 throw SecurityException("فشل التحقق من بصمة التحديث؛ تم رفض الملف.")
+            }
+            val archiveInfo = if (Build.VERSION.SDK_INT >= 33) {
+                applicationContext.packageManager.getPackageArchiveInfo(
+                    temporary.absolutePath, PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                applicationContext.packageManager.getPackageArchiveInfo(temporary.absolutePath, 0)
+            } ?: throw SecurityException("ملف التحديث ليس تطبيق Android صالحًا.")
+            val archiveVersionCode = if (Build.VERSION.SDK_INT >= 28) archiveInfo.longVersionCode else {
+                @Suppress("DEPRECATION")
+                archiveInfo.versionCode.toLong()
+            }
+            if (archiveInfo.packageName != applicationContext.packageName ||
+                archiveVersionCode != versionCode.toLong()) {
+                throw SecurityException("بيانات ملف APK لا تطابق الإصدار المعلن؛ تم رفض الملف.")
             }
             if (target.exists()) target.delete()
             if (!temporary.renameTo(target)) throw IllegalStateException("تعذر حفظ ملف التحديث.")
