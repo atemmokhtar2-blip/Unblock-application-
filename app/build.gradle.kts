@@ -37,7 +37,7 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.3.1")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("com.rmtheis:tess-two:9.1.0")
+    implementation("cz.adaptech.tesseract4android:tesseract4android:4.9.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
     testImplementation("junit:junit:4.13.2")
 }
@@ -54,8 +54,8 @@ tasks.register("downloadAppAssets") {
     )
     doLast {
         val models = mapOf(
-            "eng" to "https://github.com/tesseract-ocr/tessdata_fast/raw/4.1.0/eng.traineddata",
-            "ara" to "https://github.com/tesseract-ocr/tessdata_fast/raw/4.1.0/ara.traineddata"
+            "eng" to "https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata",
+            "ara" to "https://github.com/tesseract-ocr/tessdata_fast/raw/main/ara.traineddata"
         )
         tessdataDir.asFile.mkdirs()
         models.forEach { (language, source) ->
