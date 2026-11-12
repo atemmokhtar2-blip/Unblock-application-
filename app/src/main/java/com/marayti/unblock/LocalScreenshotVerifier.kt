@@ -168,7 +168,8 @@ class LocalScreenshotVerifier(private val context: Context) {
     private fun extractDate(text: String): String {
         val patterns = listOf(
             Regex("\\b\\d{4}-\\d{1,2}-\\d{1,2}\\b"),
-            Regex("\\b\\d{1,2}[/.-]\\d{1,2}[/.-]\\d{2,4}\\b")
+            Regex("\\b\\d{1,2}[/.-]\\d{1,2}[/.-]\\d{2,4}\\b"),
+            Regex("\\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?\\s+\\d{1,2},?\\s+\\d{4}\\b", RegexOption.IGNORE_CASE)
         )
         return patterns.firstNotNullOfOrNull { it.find(text)?.value }.orEmpty()
     }
@@ -181,9 +182,17 @@ class LocalScreenshotVerifier(private val context: Context) {
     }
 
     private fun extractReason(text: String, arabic: Boolean): String {
-        val candidates = if (arabic) listOf("شروط الخدمه", "سياسه", "مخالفه", "انتهاك", "نشاط غير معتاد", "بلاغات")
-            else listOf("terms of service", "policy", "violation", "suspicious activity", "spam", "reports")
-        return candidates.firstOrNull { text.contains(it) }.orEmpty()
+        val mapping = if (arabic) listOf(
+            "رسائل جماعيه" to "bulk/automated", "مزعج" to "spam", "ازعاج" to "spam",
+            "انتحال" to "impersonation", "احتيال" to "fraud", "غير قانوني" to "illegal",
+            "مخالفه" to "terms violation"
+        ) else listOf(
+            "spam" to "spam", "bulk" to "bulk/automated", "automated" to "bulk/automated",
+            "automation" to "bulk/automated", "unsolicited" to "bulk/automated",
+            "illegal" to "illegal", "unauthorized" to "illegal", "impersonat" to "impersonation",
+            "fraud" to "fraud", "abuse" to "abuse"
+        )
+        return mapping.firstOrNull { text.contains(it.first) }?.second.orEmpty()
     }
 
     private fun reject(message: String) = VerificationResult(false, message)
