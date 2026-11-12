@@ -36,17 +36,40 @@ jobs:
         run: gradle --no-daemon :app:testDebugUnitTest
       - name: Build debug APK
         run: gradle --no-daemon :app:assembleDebug
-      - name: Build hardened release APK
-        run: gradle --no-daemon :app:assembleRelease
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: unblock-assistant-debug
           path: app/build/outputs/apk/debug/app-debug.apk
-      - name: Upload hardened release APK and R8 mapping
+      - name: Configure persistent release signing
+        if: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          mkdir -p "$RUNNER_TEMP/unblock-signing"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/unblock-signing/release.jks"
+          test -s "$RUNNER_TEMP/unblock-signing/release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/unblock-signing/release.jks" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+      - name: Build permanently signed release APK
+        if: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: gradle --no-daemon :app:assembleRelease
+      - name: Upload permanently signed release APK
+        if: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE_BASE64 != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: unblock-assistant-hardened-release
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/mapping/release/mapping.txt
+      - name: Explain missing signing secrets
+        if: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE_BASE64 == '' }}
+        run: echo "Release APK skipped. Add the four ANDROID_* signing secrets to enable persistent signed releases."
