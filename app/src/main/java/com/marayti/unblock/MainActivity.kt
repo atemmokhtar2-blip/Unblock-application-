@@ -1,6 +1,10 @@
 package com.marayti.unblock
 
 import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.ActivityCompat
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -110,6 +114,10 @@ class MainActivity : ComponentActivity() {
         if (!AppSecurityGuard.isEnvironmentTrusted(this)) {
             finish()
             return
+        }
+        UpdateScheduler.schedule(this)
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 7301)
         }
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(
@@ -231,7 +239,12 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
             AnimatedBackdrop(useRedTheme = !showSettings && step in 2..7, useSettingsTheme = showSettings)
         }
         if (showSettings) {
-            SettingsScreen(onBack = { showSettings = false }) {
+            SettingsScreen(
+                onBack = { showSettings = false },
+                updateStatus = UpdateManager.readStatus(context),
+                onCheckUpdates = { UpdateScheduler.checkNow(context) },
+                onInstallUpdate = { UpdateInstaller.install(context) }
+            ) {
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/K_J6k")))
             }
         } else {
@@ -610,7 +623,13 @@ private fun AnimatedBackdrop(useRedTheme: Boolean = false, useSettingsTheme: Boo
 }
 
 @androidx.compose.runtime.Composable
-private fun SettingsScreen(onBack: () -> Unit, onOpenTelegram: () -> Unit) {
+private fun SettingsScreen(
+    onBack: () -> Unit,
+    updateStatus: UpdateStatus,
+    onCheckUpdates: () -> Unit,
+    onInstallUpdate: () -> Unit,
+    onOpenTelegram: () -> Unit
+) {
     Column(
         Modifier.fillMaxSize().padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -629,6 +648,26 @@ private fun SettingsScreen(onBack: () -> Unit, onOpenTelegram: () -> Unit) {
                     Text("عن التطبيق", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                 }
                 Text("فحص محلي لصور إشعارات حظر واتساب وتجهيز طلب مراجعة. لا يتم رفع الصور إلى أي خادم.", color = Muted, textAlign = TextAlign.End)
+            }
+        }
+        Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Mint.copy(alpha = 0.35f))) {
+            Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Filled.Bolt, contentDescription = null, tint = Mint)
+                    Text("إصدار التطبيق والتحديثات", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                }
+                Text("الإصدار المثبت: ${updateStatus.currentVersion} (رقم ${updateStatus.currentCode})", color = Color.White, textAlign = TextAlign.End)
+                Text("أحدث إصدار: ${updateStatus.latestVersion ?: "جارٍ التحقق"}", color = Muted, textAlign = TextAlign.End)
+                Text(updateStatus.message, color = if (updateStatus.downloaded) Mint else Muted, textAlign = TextAlign.End)
+                if (updateStatus.downloaded) {
+                    Button(onClick = onInstallUpdate, modifier = Modifier.fillMaxWidth()) {
+                        Text("تثبيت التحديث")
+                    }
+                }
+                OutlinedButton(onClick = onCheckUpdates, modifier = Modifier.fillMaxWidth()) {
+                    Text("التحقق من وجود تحديثات")
+                }
+                Text("يعمل التطبيق دون إنترنت. يتم فحص التحديثات عند توفر الاتصال فقط.", color = Muted, fontSize = 12.sp, textAlign = TextAlign.End)
             }
         }
         Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(24.dp)) {
