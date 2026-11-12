@@ -22,6 +22,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,6 +57,9 @@ import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.offset
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -329,7 +333,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                     ChoiceRow(listOf("مراجعة عادية" to "review", "مراجعة بشرية" to "human", "طلب عاجل" to "urgent", "توضيح السبب" to "explain"), requestType, stepAccent) { requestType = it }
                                 }
                                 5 -> {
-                                    StepHeading("اكتب اسمك عشان يظهر في الخطاب", "اكتب الاسم الذي تريد ظهوره في الخطاب. (اختياري)", stepAccent)
+                                    StepHeading("اكتب اسمك عشان يظهر في الخطاب", "اكتب اسمًا واحدًا على الأقل ليظهر في الخطاب. لا يمكن ترك الخانة فارغة.", stepAccent)
                                     OutlinedTextField(
                                         value = fullName,
                                         onValueChange = { fullName = it.take(60) },
@@ -382,6 +386,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                             error = when (step) {
                                 0 -> if (AppealTemplates.validatePhone(phone)) "" else "رقم الهاتف غير صحيح. راجع الأرقام وحاول مرة أخرى."
                                 1 -> if (imageAccepted) "" else "لازم تفحص صورة إشعار الحظر الصحيحة قبل المتابعة."
+                                5 -> if (fullName.isNotBlank()) "" else "اكتب اسمك أولًا قبل المتابعة."
                                 else -> ""
                             }
                             if (error.isBlank()) {
@@ -390,11 +395,11 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                         val message = runCatching {
                                             when (outputType) {
                                                 "short" -> AppealTemplates.buildShort(severity, phone, reason, requestType, evidence)
-                                                "arabic" -> AppealTemplates.buildArabic(severity, phone, reason, requestType, evidence, fullName)
-                                                "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName)
-                                                "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName)
-                                                "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName)
-                                                else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)
+                                                "arabic" -> AppealTemplates.buildArabic(severity, phone, reason, requestType, evidence, fullName.trim())
+                                                "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName.trim())
+                                                "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName.trim())
+                                                "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName.trim())
+                                                else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName.trim())
                                             }
                                         }.getOrElse { it.message ?: "تعذر تجهيز الرسالة" }
                                         val firstLine = message.lineSequence().firstOrNull().orEmpty()
@@ -481,14 +486,22 @@ private fun AnimatedStageProgress(completedStages: Int, totalStages: Int) {
         Color(0xFFFF4D8D), Color(0xFFFFC857), Color(0xFF6DFFB8),
         Color(0xFF45D9FF), Color(0xFF8C70FF), Color(0xFFFF4D8D)
     )
-    Box(Modifier.fillMaxWidth().height(30.dp), contentAlignment = Alignment.Center) {
-        Box(Modifier.fillMaxWidth().height(5.dp).background(Color.White.copy(alpha = 0.13f), RoundedCornerShape(50)))
-        Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(5.dp).align(Alignment.CenterEnd)) {
+    BoxWithConstraints(Modifier.fillMaxWidth().height(30.dp)) {
+        val safeProgress = progress.coerceIn(0f, 1f)
+        Box(Modifier.fillMaxWidth().height(5.dp).align(Alignment.CenterStart).background(Color.White.copy(alpha = 0.13f), RoundedCornerShape(50)))
+        Box(Modifier.fillMaxWidth(safeProgress).height(5.dp).align(Alignment.CenterStart)) {
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(progressColors), RoundedCornerShape(50)))
         }
-        Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(30.dp).align(Alignment.CenterEnd), contentAlignment = Alignment.CenterEnd) {
-            Icon(Icons.Filled.Star, contentDescription = "تقدم المراحل", tint = Color(0xFFFFD76A), modifier = Modifier.width(25.dp).rotate(starRotation))
-        }
+        Icon(
+            Icons.Filled.Star,
+            contentDescription = "تقدم المراحل",
+            tint = Color(0xFFFFD76A),
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .offset(x = (maxWidth - 25.dp).coerceAtLeast(0.dp) * safeProgress)
+                .width(25.dp)
+                .rotate(starRotation)
+        )
     }
 }
 
