@@ -14,6 +14,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_RELEASE_SIGNING: ${{ env.HAS_RELEASE_SIGNING == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,5 +73,5 @@ jobs:
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/mapping/release/mapping.txt
       - name: Explain missing signing secrets
-        if: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE_BASE64 == '' }}
+        if: ${{ github.event_name != 'pull_request' && env.HAS_RELEASE_SIGNING != 'true' }}
         run: echo "Release APK skipped. Add the four ANDROID_* signing secrets to enable persistent signed releases."
