@@ -174,7 +174,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
     var evidence by remember { mutableStateOf(VerificationResult(false, "")) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
-    var showSettings by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf((context as? MainActivity)?.intent?.getBooleanExtra("open_update_settings", false) == true) }
     var emailSubject by remember { mutableStateOf("") }
     var emailBody by remember { mutableStateOf("") }
 
@@ -630,6 +630,14 @@ private fun SettingsScreen(
     onInstallUpdate: () -> Unit,
     onOpenTelegram: () -> Unit
 ) {
+    val updateContext = LocalContext.current
+    var displayedUpdateStatus by remember { mutableStateOf(updateStatus) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            displayedUpdateStatus = UpdateManager.readStatus(updateContext)
+            delay(1500)
+        }
+    }
     Column(
         Modifier.fillMaxSize().padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -656,7 +664,7 @@ private fun SettingsScreen(
                     Icon(Icons.Filled.Bolt, contentDescription = null, tint = Mint)
                     Text("إصدار التطبيق والتحديثات", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("الإصدار المثبت: ${updateStatus.currentVersion} (رقم ${updateStatus.currentCode})", color = Color.White, textAlign = TextAlign.End)
+                Text("الإصدار المثبت: ${displayedUpdateStatus.currentVersion} (رقم ${updateStatus.currentCode})", color = Color.White, textAlign = TextAlign.End)
                 Text("أحدث إصدار: ${updateStatus.latestVersion ?: "جارٍ التحقق"}", color = Muted, textAlign = TextAlign.End)
                 Text(updateStatus.message, color = if (updateStatus.downloaded) Mint else Muted, textAlign = TextAlign.End)
                 if (updateStatus.downloaded) {
