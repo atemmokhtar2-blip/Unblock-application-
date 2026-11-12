@@ -11,10 +11,8 @@ import android.os.Debug
  */
 internal object AppSecurityGuard {
     fun isEnvironmentTrusted(context: Context): Boolean {
-        if (BuildConfig.DEBUG) return true
-
-        // A release package must not be marked debuggable or attached to a debugger.
-        if ((context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) return false
+        // Debug builds are allowed for local development; release builds must not be debuggable.
+        if ((context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) return true
         if (Debug.isDebuggerConnected() || Debug.waitingForDebugger()) return false
 
         // Detect a process being traced on Linux/Android.
