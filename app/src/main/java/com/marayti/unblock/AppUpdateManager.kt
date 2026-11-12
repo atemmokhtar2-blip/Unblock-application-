@@ -207,8 +207,10 @@ class AppUpdateWorker(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val lockDirectory = File(applicationContext.filesDir, "updates").apply { mkdirs() }
         val lockFile = File(lockDirectory, "update-worker.lock")
-        RandomAccessFile(lockFile, "rw").channel.use { channel ->
-            channel.lock().use { performUpdate() }
+        synchronized(UPDATE_PROCESS_LOCK) {
+            RandomAccessFile(lockFile, "rw").channel.use { channel ->
+                channel.lock().use { performUpdate() }
+            }
         }
     }
 
@@ -430,6 +432,7 @@ class AppUpdateWorker(
     }
 
     companion object {
+        private val UPDATE_PROCESS_LOCK = Any()
         private const val UPDATE_MANIFEST_URL = "https://raw.githubusercontent.com/atemmokhtar2-blip/Unblock-application-/main/update.json"
         private const val CHANNEL_ID = "unblock_updates"
         private const val NOTIFICATION_ID = 7303
