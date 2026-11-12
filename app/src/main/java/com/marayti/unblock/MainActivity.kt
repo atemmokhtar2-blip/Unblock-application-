@@ -242,7 +242,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                 }
 
                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    AnimatedStageProgress(completedStages = (step + 1).coerceIn(0, 8), totalStages = 8)
+                    AnimatedStageProgress(completedStages = step.coerceIn(0, 8), totalStages = 8)
 
                     val borderMotion = rememberInfiniteTransition(label = "rainbow-border")
                     val borderPhase by borderMotion.animateFloat(
