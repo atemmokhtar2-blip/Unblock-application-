@@ -18,7 +18,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.drawCircle
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -226,6 +225,7 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
             }
         }
         Text("خصوصيتك أولًا · الفحص محلي على جهازك", color = Muted, fontSize = 12.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+    }
     }
     }
 }
