@@ -55,7 +55,7 @@ class LocalScreenshotVerifier(private val context: Context) {
 
             val tess = TessBaseAPI()
             try {
-                val initialized = tess.init(dataRoot.absolutePath, "eng+ara", TessBaseAPI.OEM_LSTM_ONLY)
+                val initialized = tess.init(dataRoot.absolutePath + File.separator, "eng+ara", TessBaseAPI.OEM_LSTM_ONLY)
                 if (!initialized) {
                     return reject("لم يتمكن محرك القراءة من تحميل اللغتين العربية والإنجليزية. أعد تثبيت التطبيق ثم حاول مجددًا.")
                 }
@@ -65,7 +65,7 @@ class LocalScreenshotVerifier(private val context: Context) {
                 if (recognized.isBlank()) return reject("الصورة واضحة لكن لم يتم استخراج نص منها. جرّب لقطة شاشة كاملة.")
                 evaluate(recognized, tess.meanConfidence())
             } finally {
-                try { tess.end() } catch (_: Exception) { }
+                try { tess.recycle() } catch (_: Exception) { }
             }
         } catch (exception: Exception) {
             reject(
