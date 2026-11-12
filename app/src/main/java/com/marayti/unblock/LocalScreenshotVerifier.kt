@@ -1,9 +1,11 @@
 package com.marayti.unblock
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.googlecode.tesseract.android.TessBaseAPI
 import java.io.File
+import java.io.IOException
 import java.util.Locale
 
 data class VerificationResult(
@@ -17,65 +19,79 @@ data class VerificationResult(
     val restrictionReason: String = ""
 )
 
-/** Strict, offline screenshot verification. Fails closed if OCR is unavailable. */
+/** Offline screenshot verification. Language data is copied and checked before OCR starts. */
 class LocalScreenshotVerifier(private val context: Context) {
     fun verify(bytes: ByteArray): VerificationResult {
         if (bytes.size < 300) return reject("ملف الصورة صغير أو غير صالح")
         if (bytes.size > 5 * 1024 * 1024) return reject("حجم الصورة أكبر من 5 ميجابايت")
 
-        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
-        if (options.outWidth < 600 || options.outHeight < 600) return reject("دقة الصورة أقل من الحد المطلوب")
-        if (options.outWidth > 8_000 || options.outHeight > 8_000 ||
-            options.outWidth.toLong() * options.outHeight.toLong() > 24_000_000L
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        if (bounds.outWidth < 600 || bounds.outHeight < 600) return reject("دقة الصورة أقل من الحد المطلوب")
+        if (bounds.outWidth > 8_000 || bounds.outHeight > 8_000 ||
+            bounds.outWidth.toLong() * bounds.outHeight.toLong() > 24_000_000L
         ) return reject("أبعاد الصورة كبيرة جدًا للفحص الآمن")
-        val ratio = options.outWidth.toFloat() / options.outHeight.toFloat()
+        val ratio = bounds.outWidth.toFloat() / bounds.outHeight.toFloat()
         if (ratio < 0.3f || ratio > 3.5f) return reject("أبعاد الصورة غير مناسبة")
 
         val decodeOptions = BitmapFactory.Options()
         var sampleSize = 1
-        while (options.outWidth / sampleSize > 3_000 || options.outHeight / sampleSize > 3_000) {
+        while (bounds.outWidth / sampleSize > 3_000 || bounds.outHeight / sampleSize > 3_000) {
             sampleSize *= 2
         }
         decodeOptions.inSampleSize = sampleSize
         val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOptions)
             ?: return reject("تعذر فتح ملف الصورة")
+
         return try {
+            if (!hasImageContent(bitmap)) return reject("الصورة فارغة أو غير واضحة")
             val dataRoot = File(context.filesDir, "tesseract")
             val tessdata = File(dataRoot, "tessdata")
-            if (!tessdata.exists()) tessdata.mkdirs()
-            listOf("eng", "ara").forEach { language ->
-                val target = File(tessdata, "$language.traineddata")
-                if (!target.exists() || target.length() < 100_000L) {
-                    context.assets.open("tessdata/$language.traineddata").use { input ->
-                        target.outputStream().use { output -> input.copyTo(output) }
-                    }
+            if (!tessdata.exists() && !tessdata.mkdirs()) {
+                throw IOException("تعذر إنشاء مجلد بيانات محرك القراءة")
+            }
+            ensureLanguageData(tessdata, "eng")
+            ensureLanguageData(tessdata, "ara")
+
+            val tess = TessBaseAPI()
+            try {
+                val initialized = tess.init(dataRoot.absolutePath, "eng+ara", TessBaseAPI.OEM_LSTM_ONLY)
+                if (!initialized) {
+                    return reject("لم يتمكن محرك القراءة من تحميل اللغتين العربية والإنجليزية. أعد تثبيت التطبيق ثم حاول مجددًا.")
                 }
+                tess.setPageSegMode(TessBaseAPI.PageSegMode.AUTO)
+                tess.setImage(bitmap)
+                val recognized = tess.getUTF8Text().orEmpty()
+                if (recognized.isBlank()) return reject("الصورة واضحة لكن لم يتم استخراج نص منها. جرّب لقطة شاشة كاملة.")
+                evaluate(recognized, tess.meanConfidence())
+            } finally {
+                try { tess.end() } catch (_: Exception) { }
             }
-            if (!hasImageContent(bitmap)) return reject("الصورة فارغة أو غير واضحة")
-            val results = mutableListOf<VerificationResult>()
-            listOf("eng", "ara").forEach { language ->
-                val tess = TessBaseAPI()
-                try {
-                    if (tess.init(dataRoot.absolutePath, language)) {
-                        tess.setImage(bitmap)
-                        val text = tess.getUTF8Text().orEmpty()
-                        if (text.isNotBlank()) results += evaluate(text, tess.meanConfidence())
-                    }
-                } finally {
-                    try { tess.end() } catch (_: Exception) { }
-                }
-            }
-            results.firstOrNull { it.accepted }?.let { accepted ->
-                return accepted
-            }
-            results.maxByOrNull { result ->
-                Regex("[\\p{L}\\p{N}]+").findAll(result.recognizedText).count()
-            } ?: reject("لم يتمكن محرك القراءة من استخراج نص واضح من الصورة")
-        } catch (_: Exception) {
-            reject("تعذر تشغيل فحص الصور محليًا. تأكد من اكتمال ملفات اللغة ثم أعد المحاولة.")
+        } catch (exception: Exception) {
+            reject(
+                "تعذر تشغيل محرك فحص الصور محليًا (${exception.javaClass.simpleName}). " +
+                    "تأكد من تثبيت النسخة كاملة ثم أعد المحاولة."
+            )
         } finally {
             bitmap.recycle()
+        }
+    }
+
+    private fun ensureLanguageData(tessdata: File, language: String) {
+        val target = File(tessdata, "$language.traineddata")
+        if (target.exists() && target.length() >= 100_000L) return
+        val temporary = File(tessdata, "$language.traineddata.part")
+        try {
+            context.assets.open("tessdata/$language.traineddata").use { input ->
+                temporary.outputStream().use { output -> input.copyTo(output) }
+            }
+            if (temporary.length() < 100_000L) {
+                throw IOException("ملف اللغة $language غير مكتمل داخل التطبيق")
+            }
+            if (target.exists() && !target.delete()) throw IOException("تعذر استبدال ملف اللغة $language")
+            if (!temporary.renameTo(target)) throw IOException("تعذر تجهيز ملف اللغة $language")
+        } finally {
+            if (temporary.exists()) temporary.delete()
         }
     }
 
@@ -124,7 +140,7 @@ class LocalScreenshotVerifier(private val context: Context) {
         }
     }
 
-    private fun hasImageContent(bitmap: android.graphics.Bitmap): Boolean {
+    private fun hasImageContent(bitmap: Bitmap): Boolean {
         val stepX = (bitmap.width / 64).coerceAtLeast(1)
         val stepY = (bitmap.height / 64).coerceAtLeast(1)
         var count = 0
@@ -163,7 +179,6 @@ class LocalScreenshotVerifier(private val context: Context) {
             .map { map[it] ?: it }.joinToString("")
             .replace(Regex("\\s+"), " ").trim()
     }
-
 
     private fun extractDate(text: String): String {
         val patterns = listOf(
