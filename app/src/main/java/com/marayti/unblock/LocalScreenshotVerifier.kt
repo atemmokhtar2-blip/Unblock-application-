@@ -10,7 +10,11 @@ data class VerificationResult(
     val accepted: Boolean,
     val message: String,
     val recognizedText: String = "",
-    val confidence: Int = 0
+    val confidence: Int = 0,
+    val date: String = "",
+    val phone: String = "",
+    val restrictionType: String = "",
+    val restrictionReason: String = ""
 )
 
 /** Strict, offline screenshot verification. Fails closed if OCR is unavailable. */
@@ -86,7 +90,16 @@ class LocalScreenshotVerifier(private val context: Context) {
         if (foreign.any { text.contains(it) }) failures += "الصورة تشير إلى منصة أخرى"
 
         return if (failures.isEmpty()) {
-            VerificationResult(true, "تم التحقق: إشعار حظر واتساب يبدو صحيحًا ✓", raw, confidence)
+            VerificationResult(
+                accepted = true,
+                message = "تم التحقق: إشعار حظر واتساب يبدو صحيحًا ✓",
+                recognizedText = raw,
+                confidence = confidence,
+                date = extractDate(text),
+                phone = extractPhone(text),
+                restrictionType = if (listOf("permanent", "دائم").any { text.contains(it) }) "permanent" else if (listOf("temporary", "مؤقت").any { text.contains(it) }) "temporary" else "standard",
+                restrictionReason = extractReason(text, arabic)
+            )
         } else {
             VerificationResult(false, "لم يتم قبول الصورة: " + failures.joinToString("، "), raw, confidence)
         }
@@ -103,6 +116,28 @@ class LocalScreenshotVerifier(private val context: Context) {
             .replace(Regex("[\\u0610-\\u061A\\u064B-\\u065F\\u0670\\u06D6-\\u06EDـ]"), "")
             .map { map[it] ?: it }.joinToString("")
             .replace(Regex("\\s+"), " ").trim()
+    }
+
+
+    private fun extractDate(text: String): String {
+        val patterns = listOf(
+            Regex("\\b\\d{4}-\\d{1,2}-\\d{1,2}\\b"),
+            Regex("\\b\\d{1,2}[/.-]\\d{1,2}[/.-]\\d{2,4}\\b")
+        )
+        return patterns.firstNotNullOfOrNull { it.find(text)?.value }.orEmpty()
+    }
+
+    private fun extractPhone(text: String): String {
+        val pattern = Regex("(?<![\\d])\\+?\\(?\\d[\\d\\s().-]{7,18}\\d(?![\\d])")
+        return pattern.findAll(text).map { it.value }.firstOrNull { candidate ->
+            candidate.count(Char::isDigit) >= 9 && !Regex("\\d{1,4}[/.-]\\d{1,2}[/.-]\\d{2,4}").containsMatchIn(candidate)
+        }.orEmpty()
+    }
+
+    private fun extractReason(text: String, arabic: Boolean): String {
+        val candidates = if (arabic) listOf("شروط الخدمه", "سياسه", "مخالفه", "انتهاك", "نشاط غير معتاد", "بلاغات")
+            else listOf("terms of service", "policy", "violation", "suspicious activity", "spam", "reports")
+        return candidates.firstOrNull { text.contains(it) }.orEmpty()
     }
 
     private fun reject(message: String) = VerificationResult(false, message)
