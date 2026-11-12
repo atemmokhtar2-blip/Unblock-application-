@@ -131,7 +131,7 @@ object AppealTemplates {
         "review" to "أرجو مراجعة حالة الحساب وإطلاعي على النتيجة وما إذا كانت هناك حاجة لأي إجراء إضافي من جانبي."
     )
 
-    fun validatePhone(phone: String): Boolean = phone.length == 11 && phone.all(Char::isDigit) &&
+    fun validatePhone(phone: String): Boolean = phone.length == 11 && phone.all { it in '0'..'9' } &&
         listOf("010", "011", "012", "015").any(phone::startsWith)
 
     private fun validate(s: String, p: String, r: String, q: String) {
