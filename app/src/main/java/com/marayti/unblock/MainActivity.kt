@@ -689,20 +689,20 @@ private fun SettingsScreen(
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Info, contentDescription = null, tint = Mint)
-                    Text("عن التطبيق", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                    Text("عن التطبيق", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("فحص محلي لصور إشعارات حظر واتساب وتجهيز طلب مراجعة. لا يتم رفع الصور إلى أي خادم.", color = Muted, textAlign = TextAlign.End)
+                Text("فحص محلي لصور إشعارات حظر واتساب وتجهيز طلب مراجعة. لا يتم رفع الصور إلى أي خادم.", color = Color.White, textAlign = TextAlign.End)
             }
         }
         Card(colors = CardDefaults.cardColors(containerColor = Color.Black), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFF72D6A8).copy(alpha = 0.60f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Bolt, contentDescription = null, tint = Mint)
-                    Text("إصدار التطبيق", color = Color(0xFF72E8D0), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text("إصدار التطبيق", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("الإصدار الحالي: ${displayedUpdateStatus.currentVersion} (رقم ${displayedUpdateStatus.currentCode})", color = Color(0xFF8EDBFF), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
-                Text("أحدث إصدار: ${displayedUpdateStatus.latestVersion ?: "جارٍ التحقق"}", color = Color(0xFFFFD27A), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
-                Text(displayedUpdateStatus.message, color = if (displayedUpdateStatus.downloaded) Color(0xFF72E8B5) else Color(0xFFC4D8F2), fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
+                Text("الإصدار الحالي: ${displayedUpdateStatus.currentVersion} (رقم ${displayedUpdateStatus.currentCode})", color = Color.White, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
+                Text("أحدث إصدار: ${displayedUpdateStatus.latestVersion ?: "جارٍ التحقق"}", color = Color.White, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
+                Text(displayedUpdateStatus.message, color = Color.White, fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
                 if (displayedUpdateStatus.checking) {
                     if (displayedUpdateStatus.progress == 0) {
                         CircularProgressIndicator(
@@ -719,19 +719,20 @@ private fun SettingsScreen(
                     )
                     Text(
                         if (displayedUpdateStatus.progress > 0) "نسبة التنزيل: ${displayedUpdateStatus.progress}%" else "جارٍ فحص التحديثات...",
-                        color = Color(0xFF8EDBFF),
+                        color = Color.White,
                         fontSize = 13.sp,
                         textAlign = TextAlign.End
                     )
                 }
                 if (displayedUpdateStatus.downloaded) {
-                    Button(onClick = onInstallUpdate, modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = onInstallUpdate, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(contentColor = Color.White)) {
                         Text("تثبيت التحديث")
                     }
                 }
                 OutlinedButton(
                     onClick = onCheckUpdates,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
                 ) {
                     Text(if (displayedUpdateStatus.checking) "إعادة فحص التحديثات" else "التحقق من وجود تحديثات")
                 }
@@ -741,19 +742,19 @@ private fun SettingsScreen(
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Send, contentDescription = null, tint = Mint)
-                    Text("المطور والدعم", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                    Text("المطور والدعم", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                 }
-                Button(onClick = onOpenTelegram, modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = onOpenTelegram, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(contentColor = Color.White)) {
                     Icon(Icons.Filled.Send, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("قناة المطور على تيليجرام")
                 }
-                OutlinedButton(onClick = onOpenTelegram, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = onOpenTelegram, modifier = Modifier.fillMaxWidth(), colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = Color.White)) {
                     Icon(Icons.Filled.Send, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("تواصل مع المطور")
                 }
-                Text("@K_J6k", color = Muted)
+                Text("@K_J6k", color = Color.White)
             }
         }
         Spacer(Modifier.weight(1f))
