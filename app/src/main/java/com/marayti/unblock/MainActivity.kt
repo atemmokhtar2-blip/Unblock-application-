@@ -71,6 +71,7 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -701,13 +702,31 @@ private fun SettingsScreen(
                 Text("الإصدار الحالي: ${displayedUpdateStatus.currentVersion} (رقم ${displayedUpdateStatus.currentCode})", color = Color(0xFF8EDBFF), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
                 Text("أحدث إصدار: ${displayedUpdateStatus.latestVersion ?: "جارٍ التحقق"}", color = Color(0xFFFFD27A), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
                 Text(displayedUpdateStatus.message, color = if (displayedUpdateStatus.downloaded) Color(0xFF72E8B5) else Color(0xFFC4D8F2), fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
+                if (displayedUpdateStatus.checking) {
+                    LinearProgressIndicator(
+                        progress = { displayedUpdateStatus.progress / 100f },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color(0xFF68E6CB),
+                        trackColor = Color(0xFF29485A)
+                    )
+                    Text(
+                        if (displayedUpdateStatus.progress > 0) "نسبة التنزيل: ${displayedUpdateStatus.progress}%" else "جارٍ فحص التحديثات...",
+                        color = Color(0xFF8EDBFF),
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.End
+                    )
+                }
                 if (displayedUpdateStatus.downloaded) {
                     Button(onClick = onInstallUpdate, modifier = Modifier.fillMaxWidth()) {
                         Text("تثبيت التحديث")
                     }
                 }
-                OutlinedButton(onClick = onCheckUpdates, modifier = Modifier.fillMaxWidth()) {
-                    Text("التحقق من وجود تحديثات")
+                OutlinedButton(
+                    onClick = onCheckUpdates,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !displayedUpdateStatus.checking
+                ) {
+                    Text(if (displayedUpdateStatus.checking) "جارٍ الفحص..." else "التحقق من وجود تحديثات")
                 }
             }
         }
