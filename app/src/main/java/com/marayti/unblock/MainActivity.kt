@@ -72,6 +72,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -703,6 +704,13 @@ private fun SettingsScreen(
                 Text("أحدث إصدار: ${displayedUpdateStatus.latestVersion ?: "جارٍ التحقق"}", color = Color(0xFFFFD27A), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
                 Text(displayedUpdateStatus.message, color = if (displayedUpdateStatus.downloaded) Color(0xFF72E8B5) else Color(0xFFC4D8F2), fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
                 if (displayedUpdateStatus.checking) {
+                    if (displayedUpdateStatus.progress == 0) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.width(28.dp),
+                            color = Color(0xFF68E6CB),
+                            strokeWidth = 3.dp
+                        )
+                    }
                     LinearProgressIndicator(
                         progress = { displayedUpdateStatus.progress / 100f },
                         modifier = Modifier.fillMaxWidth(),
