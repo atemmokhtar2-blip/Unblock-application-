@@ -450,14 +450,17 @@ private fun outputLabel(value: String) = when (value) { "short" -> "رسالة �
 
 @androidx.compose.runtime.Composable
 private fun HatemAnimatedLabel() {
-    var visibleLetters by remember { mutableStateOf(0) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            for (count in 1..5) { visibleLetters = count; delay(260) }
-            delay(900)
-            for (count in 4 downTo 0) { visibleLetters = count; delay(150) }
-            delay(250)
-        }
+    val lightning = rememberInfiniteTransition(label = "hatem-lightning")
+    val flash by lightning.animateFloat(
+        initialValue = 0.16f,
+        targetValue = 0.92f,
+        animationSpec = infiniteRepeatable(animation = tween(1250)),
+        label = "lightning-flash"
+    )
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Text("ϟ", color = Color.White.copy(alpha = flash), fontSize = 23.sp, fontWeight = FontWeight.Black)
+        Spacer(Modifier.height(1.dp))
+        Text("H A T E M", color = Mint.copy(alpha = flash), fontWeight = FontWeight.ExtraBold, letterSpacing = 2.sp)
+        Text("ϟ", color = Color.White.copy(alpha = flash), fontSize = 23.sp, fontWeight = FontWeight.Black)
     }
-    Text("HATEM".take(visibleLetters).toCharArray().joinToString(" "), color = Mint, fontWeight = FontWeight.ExtraBold, letterSpacing = 3.sp)
 }
