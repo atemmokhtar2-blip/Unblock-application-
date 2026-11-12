@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.LinearEasing
@@ -60,6 +61,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -240,12 +242,8 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                 }
 
                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Text("الخطوة ${(step + 1).coerceAtMost(8)} من 8", color = Mint, fontSize = 12.sp)
-                    }
-                    Box(Modifier.fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.10f), RoundedCornerShape(8.dp))) {
-                        Box(Modifier.fillMaxWidth((step + 1) / 8f).height(4.dp).background(Mint, RoundedCornerShape(8.dp)))
-                    }
+                    AnimatedStageProgress(completedStages = (step + 1).coerceIn(0, 8), totalStages = 8)
+
                     val borderMotion = rememberInfiniteTransition(label = "rainbow-border")
                     val borderPhase by borderMotion.animateFloat(
                         initialValue = 0f,
@@ -273,7 +271,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                         ) {
                             when (step) {
                                 0 -> {
-                                    StepHeading("01", "رقم الهاتف المحظور", "اكتب رقم واتساب المرتبط بالحساب الذي تريد فك حظره.")
+                                    StepHeading("رقم الهاتف المحظور", "اكتب رقم واتساب المرتبط بالحساب الذي تريد فك حظره.")
                                     OutlinedTextField(
                                         value = phone,
                                         onValueChange = { value -> phone = value.filter { it in '0'..'9' }.take(11); error = "" },
@@ -286,7 +284,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                     )
                                 }
                                 1 -> {
-                                    StepHeading("02", "صورة إشعار الحظر", "اختار لقطة شاشة واضحة من داخل واتساب. الفحص بيتم محليًا.")
+                                    StepHeading("صورة إشعار الحظر", "اختار لقطة شاشة واضحة من داخل واتساب. الفحص بيتم محليًا.")
                                     Button(
                                         onClick = { imagePicker.launch("image/*") },
                                         enabled = !busy,
@@ -300,19 +298,19 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                     if (imageAccepted) Text("تم التحقق من الإشعار بنجاح", color = Mint, fontWeight = FontWeight.Bold)
                                 }
                                 2 -> {
-                                    StepHeading("03", "نوع الحظر", "اختار أقرب وصف للحالة الظاهرة عندك.")
+                                    StepHeading("نوع الحظر", "اختار أقرب وصف للحالة الظاهرة عندك.")
                                     ChoiceRow(listOf("حظر عادي" to "standard", "مؤقت أو متكرر" to "temporary", "حظر مشدد" to "severe"), severity) { severity = it }
                                 }
                                 3 -> {
-                                    StepHeading("04", "سبب الحظر", "لو مش متأكد من السبب، اختار لا أعرف.")
+                                    StepHeading("سبب الحظر", "لو مش متأكد من السبب، اختار لا أعرف.")
                                     ChoiceRow(listOf("أعتقد أنه خطأ" to "mistake", "نشاط غير معتاد" to "unusual", "بلاغات أو شكاوى" to "reports", "مشكلة محتوى" to "content", "لا أعرف السبب" to "unknown", "سبب آخر" to "other"), reason) { reason = it }
                                 }
                                 4 -> {
-                                    StepHeading("05", "نوع المراجعة", "اختار الطريقة الأقرب لطلبك.")
+                                    StepHeading("نوع المراجعة", "اختار الطريقة الأقرب لطلبك.")
                                     ChoiceRow(listOf("مراجعة عادية" to "review", "مراجعة بشرية" to "human", "طلب عاجل" to "urgent", "توضيح السبب" to "explain"), requestType) { requestType = it }
                                 }
                                 5 -> {
-                                    StepHeading("06", "اكتب اسمك عشان يظهر في الخطاب", "اكتب الاسم الذي تريد ظهوره في الخطاب. (اختياري)")
+                                    StepHeading("اكتب اسمك عشان يظهر في الخطاب", "اكتب الاسم الذي تريد ظهوره في الخطاب. (اختياري)")
                                     OutlinedTextField(
                                         value = fullName,
                                         onValueChange = { fullName = it.take(60) },
@@ -323,11 +321,11 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                     )
                                 }
                                 6 -> {
-                                    StepHeading("07", "صيغة الرسالة", "اختار شكل الخطاب الذي تريد إرساله.")
+                                    StepHeading("صيغة الرسالة", "اختار شكل الخطاب الذي تريد إرساله.")
                                     ChoiceRow(listOf("خطاب كامل" to "long", "رسالة قصيرة" to "short", "النسخة العربية" to "arabic", "متابعة بعد 48 ساعة" to "followup", "تصعيد الطلب" to "escalation", "إشعار أخير" to "final"), outputType) { outputType = it }
                                 }
                                 else -> {
-                                    StepHeading("08", "راجع بياناتك", "اضغط الزر لتجهيز رسالة المراجعة في تطبيق البريد.")
+                                    StepHeading("راجع بياناتك", "اضغط الزر لتجهيز رسالة المراجعة في تطبيق البريد.")
                                     SummaryLine("رقم الهاتف", phone)
                                     SummaryLine("نوع الحظر", severityLabel(severity))
                                     SummaryLine("السبب", reasonLabel(reason))
@@ -439,24 +437,40 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
 }
 
 @androidx.compose.runtime.Composable
-private fun StepHeading(number: String, title: String, description: String) {
-    val headingIcon = when (number) {
-        "01" -> Icons.Filled.PhoneAndroid
-        "02" -> Icons.Filled.PhotoLibrary
-        "03" -> Icons.Filled.Block
-        "04" -> Icons.Filled.Help
-        "05" -> Icons.Filled.RateReview
-        "06" -> Icons.Filled.Person
-        "07" -> Icons.Filled.Edit
-        else -> Icons.Filled.CheckCircle
-    }
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(number, color = Mint, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Icon(headingIcon, contentDescription = null, tint = Mint, modifier = Modifier.width(18.dp))
+private fun AnimatedStageProgress(completedStages: Int, totalStages: Int) {
+    val targetProgress = completedStages.toFloat() / totalStages.toFloat()
+    val progress by animateFloatAsState(
+        targetValue = targetProgress,
+        animationSpec = tween(durationMillis = 850, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "stage-progress"
+    )
+    val starMotion = rememberInfiniteTransition(label = "progress-star-spin")
+    val starRotation by starMotion.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(animation = tween(2600, easing = LinearEasing)),
+        label = "progress-star-rotation"
+    )
+    val progressColors = listOf(
+        Color(0xFFFF4D8D), Color(0xFFFFC857), Color(0xFF6DFFB8),
+        Color(0xFF45D9FF), Color(0xFF8C70FF), Color(0xFFFF4D8D)
+    )
+    Box(Modifier.fillMaxWidth().height(30.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxWidth().height(5.dp).background(Color.White.copy(alpha = 0.13f), RoundedCornerShape(50)))
+        Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(5.dp).align(Alignment.CenterEnd)) {
+            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(progressColors), RoundedCornerShape(50)))
         }
-        Text(title, color = Color.White, fontSize = 23.sp, fontWeight = FontWeight.Bold)
-        Text(description, color = Muted, fontSize = 13.sp, textAlign = TextAlign.End)
+        Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(30.dp).align(Alignment.CenterEnd), contentAlignment = Alignment.CenterEnd) {
+            Icon(Icons.Filled.Star, contentDescription = "تقدم المراحل", tint = Color(0xFFFFD76A), modifier = Modifier.width(25.dp).rotate(starRotation))
+        }
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun StepHeading(title: String, description: String) {
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Text(title, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold, fontFamily = DisplayFont, textAlign = TextAlign.End)
+        Text(description, color = Muted, fontSize = 14.sp, fontFamily = DisplayFont, textAlign = TextAlign.End, lineHeight = 22.sp)
     }
 }
 
