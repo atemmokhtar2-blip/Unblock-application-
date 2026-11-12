@@ -20,7 +20,7 @@ data class VerificationResult(
 )
 
 /** Offline screenshot verification. Language data is copied and checked before OCR starts. */
-class LocalScreenshotVerifier(private val context: Context) {
+class LocalScreenshotVerifier(private val context: Context?) {
     fun verify(bytes: ByteArray): VerificationResult {
         if (bytes.size < 300) return reject("ملف الصورة صغير أو غير صالح")
         if (bytes.size > 5 * 1024 * 1024) return reject("حجم الصورة أكبر من 5 ميجابايت")
@@ -45,7 +45,8 @@ class LocalScreenshotVerifier(private val context: Context) {
 
         return try {
             if (!hasImageContent(bitmap)) return reject("الصورة فارغة أو غير واضحة")
-            val dataRoot = File(context.filesDir, "tesseract")
+            val appContext = context ?: return reject("تعذر الوصول إلى بيانات التطبيق")
+            val dataRoot = File(appContext.filesDir, "tesseract")
             val tessdata = File(dataRoot, "tessdata")
             if (!tessdata.exists() && !tessdata.mkdirs()) {
                 throw IOException("تعذر إنشاء مجلد بيانات محرك القراءة")
@@ -82,7 +83,7 @@ class LocalScreenshotVerifier(private val context: Context) {
         if (target.exists() && target.length() >= 100_000L) return
         val temporary = File(tessdata, "$language.traineddata.part")
         try {
-            context.assets.open("tessdata/$language.traineddata").use { input ->
+            (context ?: throw IOException("سياق التطبيق غير متاح")).assets.open("tessdata/$language.traineddata").use { input ->
                 temporary.outputStream().use { output -> input.copyTo(output) }
             }
             if (temporary.length() < 100_000L) {
