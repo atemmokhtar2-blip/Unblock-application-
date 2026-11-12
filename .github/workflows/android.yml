@@ -4,6 +4,9 @@ name: Android build
 permissions:
   contents: write
 
+concurrency:
+  group: unblock-android-${{ github.ref }}
+  cancel-in-progress: true
 
 on:
   push:
