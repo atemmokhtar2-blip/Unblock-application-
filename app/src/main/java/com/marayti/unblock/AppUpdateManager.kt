@@ -330,11 +330,11 @@ class AppUpdateWorker(
             if (connection.responseCode !in 200..299) {
                 throw IllegalStateException("تعذر تنزيل التحديث: HTTP ${connection.responseCode}")
             }
+            val expectedLength = connection.contentLengthLong
+            var total = 0L
             connection.inputStream.use { input ->
                 destination.outputStream().buffered().use { output ->
                     val buffer = ByteArray(64 * 1024)
-                    var total = 0L
-                    val expectedLength = connection.contentLengthLong
                     var lastReported = -1
                     while (true) {
                         val count = input.read(buffer)
