@@ -60,7 +60,21 @@ class MainActivity : ComponentActivity() {
             )) {
                 Surface(Modifier.fillMaxSize(), color = Ink) {
                     UnblockHome(
-                        onReadImage = { uri -> contentResolver.openInputStream(uri)?.use { it.readBytes() } },
+                        onReadImage = { uri ->
+                            contentResolver.openInputStream(uri)?.use { input ->
+                                val output = java.io.ByteArrayOutputStream()
+                                val buffer = ByteArray(8192)
+                                var total = 0
+                                while (true) {
+                                    val count = input.read(buffer)
+                                    if (count < 0) break
+                                    total += count
+                                    if (total > 5 * 1024 * 1024) return@use null
+                                    output.write(buffer, 0, count)
+                                }
+                                output.toByteArray()
+                            }
+                        },
                         onShare = { text ->
                             val send = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
