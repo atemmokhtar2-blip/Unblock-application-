@@ -207,7 +207,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
             )
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.24f)))
         } else {
-            AnimatedBackdrop()
+            AnimatedBackdrop(useRedTheme = !showSettings && step in 2..7)
         }
         if (showSettings) {
             SettingsScreen(onBack = { showSettings = false }) {
@@ -261,7 +261,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                         ) {
                             when (step) {
                                 0 -> {
-                                    StepHeading("01", "رقم الهاتف المحظور", "اكتب رقم واتساب المرتبط بالحساب الذي تريد مراجعته.")
+                                    StepHeading("01", "رقم الهاتف المحظور", "اكتب رقم واتساب المرتبط بالحساب الذي تريد فك حظره.")
                                     OutlinedTextField(
                                         value = phone,
                                         onValueChange = { value -> phone = value.filter { it in '0'..'9' }.take(11); error = "" },
@@ -300,12 +300,12 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                     ChoiceRow(listOf("مراجعة عادية" to "review", "مراجعة بشرية" to "human", "طلب عاجل" to "urgent", "توضيح السبب" to "explain"), requestType) { requestType = it }
                                 }
                                 5 -> {
-                                    StepHeading("06", "اسم صاحب الحساب", "اكتب اسمك كما تحب أن يظهر في خطاب المراجعة. (اختياري)")
+                                    StepHeading("06", "اكتب اسمك عشان يظهر في الخطاب", "اكتب الاسم الذي تريد ظهوره في الخطاب. (اختياري)")
                                     OutlinedTextField(
                                         value = fullName,
                                         onValueChange = { fullName = it.take(60) },
                                         modifier = Modifier.fillMaxWidth(),
-                                        label = { Text("الاسم الكامل") },
+                                        label = { Text("اكتب اسمك") },
                                         leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null, tint = Mint) },
                                         singleLine = true
                                     )
@@ -509,17 +509,24 @@ private fun choiceIcon(value: String): ImageVector = when (value) {
 }
 
 @androidx.compose.runtime.Composable
-private fun AnimatedBackdrop() {
+private fun AnimatedBackdrop(useRedTheme: Boolean = false) {
     Canvas(Modifier.fillMaxSize()) {
         drawRect(brush = Brush.linearGradient(
-            colors = listOf(Color(0xFF07131F), Color(0xFF102A38), Color(0xFF11152B)),
+            colors = if (useRedTheme) listOf(Color(0xFF020203), Color(0xFF16070B), Color(0xFF350B16), Color(0xFF080609)) else listOf(Color(0xFF07131F), Color(0xFF102A38), Color(0xFF11152B)),
             start = androidx.compose.ui.geometry.Offset(0f, 0f),
             end = androidx.compose.ui.geometry.Offset(size.width, size.height)
         ))
-        drawCircle(Color(0x2638E8C0), radius = size.minDimension * 0.48f,
-            center = androidx.compose.ui.geometry.Offset(size.width * 0.08f, size.height * 0.18f))
-        drawCircle(Color(0x263D8BFF), radius = size.minDimension * 0.40f,
-            center = androidx.compose.ui.geometry.Offset(size.width * 0.94f, size.height * 0.84f))
+        if (useRedTheme) {
+            drawCircle(Color(0x35B51632), radius = size.minDimension * 0.52f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.04f, size.height * 0.20f))
+            drawCircle(Color(0x258C1028), radius = size.minDimension * 0.42f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.96f, size.height * 0.86f))
+        } else {
+            drawCircle(Color(0x2638E8C0), radius = size.minDimension * 0.48f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.08f, size.height * 0.18f))
+            drawCircle(Color(0x263D8BFF), radius = size.minDimension * 0.40f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.94f, size.height * 0.84f))
+        }
     }
 }
 
