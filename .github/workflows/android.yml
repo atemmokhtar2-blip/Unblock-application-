@@ -62,6 +62,36 @@ jobs:
           echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
           echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
           echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+      - name: Validate release keystore credentials safely
+        if: ${{ github.event_name != 'pull_request' && env.HAS_RELEASE_SIGNING == 'true' }}
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          STORE="$ANDROID_KEYSTORE_PATH"
+          echo "Checking keystore file format and store password..."
+          if ! keytool -list -keystore "$STORE" -storepass "$ANDROID_KEYSTORE_PASSWORD" >/dev/null 2>&1; then
+            echo "::error::Keystore cannot be opened. The decoded file and/or ANDROID_KEYSTORE_PASSWORD do not match."
+            exit 1
+          fi
+          echo "Keystore and store password: OK"
+          echo "Checking configured key alias..."
+          if ! keytool -list -keystore "$STORE" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null 2>&1; then
+            echo "::error::ANDROID_KEY_ALIAS was not found in the keystore, or the keystore credentials are invalid."
+            exit 1
+          fi
+          echo "Key alias: OK"
+          echo "Checking private-key password by signing a temporary test file..."
+          mkdir -p "$RUNNER_TEMP/signing-check"
+          printf 'signing-check\n' > "$RUNNER_TEMP/signing-check/check.txt"
+          jar --create --file "$RUNNER_TEMP/signing-check/check.jar" -C "$RUNNER_TEMP/signing-check" check.txt
+          if ! jarsigner -keystore "$STORE" -storepass "$ANDROID_KEYSTORE_PASSWORD" -keypass "$ANDROID_KEY_PASSWORD" -signedjar "$RUNNER_TEMP/signing-check/check-signed.jar" "$RUNNER_TEMP/signing-check/check.jar" "$ANDROID_KEY_ALIAS" >/dev/null 2>&1; then
+            echo "::error::ANDROID_KEY_PASSWORD does not unlock the private key for the configured alias."
+            exit 1
+          fi
+          echo "Private-key password: OK"
       - name: Build permanently signed release APK
         if: ${{ github.event_name != 'pull_request' && env.HAS_RELEASE_SIGNING == 'true' }}
         run: gradle --no-daemon :app:assembleRelease
