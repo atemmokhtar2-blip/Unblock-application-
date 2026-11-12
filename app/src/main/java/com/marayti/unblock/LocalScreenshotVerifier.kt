@@ -27,12 +27,18 @@ class LocalScreenshotVerifier(private val context: Context) {
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
         if (options.outWidth < 600 || options.outHeight < 600) return reject("دقة الصورة أقل من الحد المطلوب")
         if (options.outWidth > 8_000 || options.outHeight > 8_000 ||
-            options.outWidth.toLong() * options.outHeight.toLong() > 40_000_000L
+            options.outWidth.toLong() * options.outHeight.toLong() > 24_000_000L
         ) return reject("أبعاد الصورة كبيرة جدًا للفحص الآمن")
         val ratio = options.outWidth.toFloat() / options.outHeight.toFloat()
         if (ratio < 0.3f || ratio > 3.5f) return reject("أبعاد الصورة غير مناسبة")
 
-        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        val decodeOptions = BitmapFactory.Options()
+        var sampleSize = 1
+        while (options.outWidth / sampleSize > 3_000 || options.outHeight / sampleSize > 3_000) {
+            sampleSize *= 2
+        }
+        decodeOptions.inSampleSize = sampleSize
+        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOptions)
             ?: return reject("تعذر فتح ملف الصورة")
         return try {
             val dataRoot = File(context.filesDir, "tesseract")
