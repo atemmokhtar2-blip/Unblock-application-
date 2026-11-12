@@ -1,5 +1,6 @@
 package com.marayti.unblock
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -45,6 +46,12 @@ class AppealTemplatesTest {
         assertTrue(draft.contains("temporary restriction"))
         assertTrue(draft.contains("spam"))
         assertFalse(draft.contains("Name:"))
+    }
+
+    @Test fun longTemplateIncludesObjectiveReviewChecklist() {
+        val draft = AppealTemplates.build("standard", phone, "mistake", "human", null, "", 0)
+        assertTrue(draft.contains("two-step verification"))
+        assertTrue(draft.contains("normal messaging patterns"))
     }
 
     @Test fun variantChangesWording() {

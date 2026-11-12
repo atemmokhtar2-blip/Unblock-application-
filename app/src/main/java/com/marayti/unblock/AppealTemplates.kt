@@ -116,6 +116,16 @@ object AppealTemplates {
         "Staying connected through WhatsApp matters deeply to me — for my family, my friends, and my job — so I am asking sincerely for your help.",
         "Being able to use WhatsApp again is genuinely important to me — it is how I stay connected to the people I care about — and I am asking for your help with sincerity."
     )
+
+    // A single, strong, honest paragraph that asks the reviewer to verify objective
+    // facts already in the account record. It asks, never asserts.
+    private val checklist =
+        "To help your team reach a fair outcome quickly, I respectfully ask that the review " +
+            "confirm a few objective facts already recorded in my account history: (1) how long I have " +
+            "continuously held the number {number}; (2) my device history and two-step verification " +
+            "status; and (3) my normal messaging patterns over recent months. I believe these checks " +
+            "will show that my account has been used normally and within the rules, and I am ready to " +
+            "provide any additional details your reviewer needs."
     private val severityShort = mapOf("severe" to "My account is completely inaccessible and the restriction appears to be severe.", "temporary" to "My account appears to be under a temporary or repeated restriction.", "standard" to "My account is currently restricted and I am unable to use it normally.")
     private val reasonShort = mapOf(
         "mistake" to "I believe this may have been applied in error and would like it reviewed against my actual history.",
@@ -202,12 +212,16 @@ object AppealTemplates {
         val i = kotlin.math.abs(variant)
         var subject = subjects[(i / (openings.size * closings.size)) % subjects.size].replace("{number}", phone)
         if (s == "severe" || evidence?.restrictionType == "permanent") subject = "URGENT — " + subject
-        val parts = mutableListOf(openings[i % openings.size], "",
-            "I am writing to appeal the restriction on my WhatsApp account registered to the number " + phone + "." +
-                if (name.isNotBlank()) " My name is " + name.trim() + " and I am the owner of this account." else "")
+        val parts = mutableListOf(
+            openings[i % openings.size], "",
+            "I am writing to appeal the restriction on my WhatsApp account registered to the number " +
+                phone + ". I am the owner of this account and I am asking for a fair, human review of the decision." +
+                (if (name.isNotBlank()) " My name is " + name.trim() + ", and I can verify my ownership at any time." else "")
+        )
         evidenceSummary(phone, name, evidence).takeIf(String::isNotBlank)?.let { parts += listOf("", it) }
         parts += listOf("", severity.getValue(s)[i % 5], "", reasons.getValue(r)[(i / 5) % 5], "",
-            requests.getValue(q)[(i / 25) % 5], "", cooperation[(i / 125) % 5].replace("{number}", phone),
+            requests.getValue(q)[(i / 25) % 5], "", checklist.replace("{number}", phone),
+            "", cooperation[(i / 125) % 5].replace("{number}", phone),
             "", importance[(i / 625) % 5])
         evidenceNarrative(evidence).takeIf(String::isNotBlank)?.let { parts += listOf("", it) }
         parts += listOf("", "I have kept a record of the in-app restriction notice and I am ready to provide screenshots, device details, and ownership verification at any time. I have also submitted a review request through the in-app option.",
