@@ -73,6 +73,8 @@ class LocalScreenshotVerifier(private val context: Context) {
         }
     }
 
+    internal fun verifyRecognizedTextForTest(raw: String, confidence: Int = 90): VerificationResult = evaluate(raw, confidence)
+
     private fun evaluate(raw: String, confidence: Int): VerificationResult {
         val text = normalize(raw)
         val tokens = Regex("[\\p{L}\\p{N}]+").findAll(text).map { it.value }.toList()
