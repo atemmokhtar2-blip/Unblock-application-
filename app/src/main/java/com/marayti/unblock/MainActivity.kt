@@ -638,11 +638,11 @@ private fun AnimatedBackdrop(useRedTheme: Boolean = false, useSettingsTheme: Boo
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.04f, size.height * 0.16f))
             drawCircle(Color(0x5540D9B0), radius = size.minDimension * 0.52f,
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.98f, size.height * 0.34f))
-            drawCircle(Color(0x554B8DFF), radius = size.minDimension * 0.48f,
+            drawCircle(Color(0x55C49A61), radius = size.minDimension * 0.48f,
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.12f, size.height * 0.94f))
-            drawCircle(Color(0x55E34FA8), radius = size.minDimension * 0.40f,
+            drawCircle(Color(0x55B86C58), radius = size.minDimension * 0.40f,
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.96f, size.height * 0.88f))
-            drawCircle(Color(0x3345E8F5), radius = size.minDimension * 0.30f,
+            drawCircle(Color(0x3349A887), radius = size.minDimension * 0.30f,
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.52f, size.height * 0.52f))
         } else if (useRedTheme) {
             drawCircle(Color(0x35B51632), radius = size.minDimension * 0.52f,
