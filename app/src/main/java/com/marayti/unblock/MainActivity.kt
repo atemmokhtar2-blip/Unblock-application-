@@ -38,6 +38,22 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Report
+import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.RateReview
+import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -251,6 +267,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                         onValueChange = { value -> phone = value.filter { it in '0'..'9' }.take(11); error = "" },
                                         modifier = Modifier.fillMaxWidth(),
                                         label = { Text("رقم الهاتف") },
+                                        leadingIcon = { Icon(Icons.Filled.PhoneAndroid, contentDescription = null, tint = Mint) },
                                         placeholder = { Text("01xxxxxxxxx") },
                                         singleLine = true,
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
@@ -289,6 +306,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                         onValueChange = { fullName = it.take(60) },
                                         modifier = Modifier.fillMaxWidth(),
                                         label = { Text("الاسم الكامل") },
+                                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null, tint = Mint) },
                                         singleLine = true
                                     )
                                 }
@@ -410,8 +428,21 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
 
 @androidx.compose.runtime.Composable
 private fun StepHeading(number: String, title: String, description: String) {
+    val headingIcon = when (number) {
+        "01" -> Icons.Filled.PhoneAndroid
+        "02" -> Icons.Filled.PhotoLibrary
+        "03" -> Icons.Filled.Block
+        "04" -> Icons.Filled.Help
+        "05" -> Icons.Filled.RateReview
+        "06" -> Icons.Filled.Person
+        "07" -> Icons.Filled.Edit
+        else -> Icons.Filled.CheckCircle
+    }
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        Text(number, color = Mint, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(number, color = Mint, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Icon(headingIcon, contentDescription = null, tint = Mint, modifier = Modifier.width(18.dp))
+        }
         Text(title, color = Color.White, fontSize = 23.sp, fontWeight = FontWeight.Bold)
         Text(description, color = Muted, fontSize = 13.sp, textAlign = TextAlign.End)
     }
@@ -430,6 +461,7 @@ private fun ChoiceRow(options: List<Pair<String, String>>, selected: String, onS
     Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
         options.forEach { (label, value) ->
             val active = selected == value
+            val optionIcon = choiceIcon(value)
             if (active) {
                 Button(
                     onClick = { onSelect(value) },
@@ -439,12 +471,41 @@ private fun ChoiceRow(options: List<Pair<String, String>>, selected: String, onS
                     Text(label, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.width(8.dp))
                     Icon(Icons.Filled.CheckCircle, contentDescription = "محدد")
+                    Spacer(Modifier.width(8.dp))
+                    Icon(optionIcon, contentDescription = null)
                 }
             } else {
-                OutlinedButton(onClick = { onSelect(value) }, modifier = Modifier.fillMaxWidth()) { Text(label) }
+                OutlinedButton(onClick = { onSelect(value) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(label)
+                    Spacer(Modifier.width(8.dp))
+                    Icon(optionIcon, contentDescription = null, tint = Mint)
+                }
             }
         }
     }
+}
+
+private fun choiceIcon(value: String): ImageVector = when (value) {
+    "standard" -> Icons.Filled.Block
+    "temporary" -> Icons.Filled.Schedule
+    "severe" -> Icons.Filled.Warning
+    "mistake" -> Icons.Filled.Report
+    "unusual" -> Icons.Filled.Bolt
+    "reports" -> Icons.Filled.Notifications
+    "content" -> Icons.Filled.Info
+    "unknown" -> Icons.Filled.Help
+    "other" -> Icons.Filled.Edit
+    "review" -> Icons.Filled.RateReview
+    "human" -> Icons.Filled.SupportAgent
+    "urgent" -> Icons.Filled.Bolt
+    "explain" -> Icons.Filled.Info
+    "long" -> Icons.Filled.Edit
+    "short" -> Icons.Filled.CheckCircle
+    "arabic" -> Icons.Filled.Translate
+    "followup" -> Icons.Filled.History
+    "escalation" -> Icons.Filled.TrendingUp
+    "final" -> Icons.Filled.Notifications
+    else -> Icons.Filled.CheckCircle
 }
 
 @androidx.compose.runtime.Composable
@@ -502,7 +563,11 @@ private fun SettingsScreen(onBack: () -> Unit, onOpenTelegram: () -> Unit) {
             }
         }
         Spacer(Modifier.weight(1f))
-        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("رجوع") }
+        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+            Icon(Icons.Filled.ArrowBack, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("رجوع")
+        }
     }
 }
 
