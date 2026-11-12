@@ -98,6 +98,12 @@ object UpdateManager {
         )
     }
 
+    internal fun hasDownloadedVersion(context: Context, versionCode: Int): Boolean {
+        val prefs = preferences(context)
+        val path = prefs.getString(KEY_APK_PATH, null) ?: return false
+        return prefs.getInt(KEY_LATEST_CODE, 0) == versionCode && File(path).isFile && File(path).length() > 0L
+    }
+
     internal fun saveNoUpdate(context: Context, latestVersion: String, latestCode: Int) {
         preferences(context).edit()
             .putString(KEY_LATEST_VERSION, latestVersion)
@@ -141,6 +147,9 @@ class AppUpdateWorker(
             val versionCode = parsed.groupValues[2].toInt()
             if (versionCode <= BuildConfig.VERSION_CODE) {
                 UpdateManager.saveNoUpdate(applicationContext, versionName, versionCode)
+                return@withContext Result.success()
+            }
+            if (UpdateManager.hasDownloadedVersion(applicationContext, versionCode)) {
                 return@withContext Result.success()
             }
 
