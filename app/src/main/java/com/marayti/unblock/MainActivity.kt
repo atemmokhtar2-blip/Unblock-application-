@@ -279,7 +279,9 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                             "arabic" -> AppealTemplates.buildArabic(severity, phone, reason, requestType, evidence, fullName)
                                             "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName)
                                             "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName)
-                                            "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName)\n                                            else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)\n                                        }
+                                            "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName)
+                                            else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)
+                                        }
                                     }.getOrElse { it.message ?: "تعذر تجهيز الرسالة" }
                                     val firstLine = message.lineSequence().firstOrNull().orEmpty()
                                     val hasSubject = firstLine.startsWith("Subject:") || firstLine.startsWith("الموضوع:")
