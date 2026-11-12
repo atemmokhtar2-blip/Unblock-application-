@@ -35,7 +35,9 @@ data class UpdateStatus(
     val currentCode: Int,
     val latestVersion: String?,
     val message: String,
-    val downloaded: Boolean
+    val downloaded: Boolean,
+    val checking: Boolean,
+    val progress: Int
 )
 
 object UpdateScheduler {
@@ -56,6 +58,7 @@ object UpdateScheduler {
     }
 
     fun checkNow(context: Context) {
+        UpdateManager.saveChecking(context)
         val request = OneTimeWorkRequestBuilder<AppUpdateWorker>()
             .setConstraints(
                 Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
@@ -73,6 +76,8 @@ object UpdateManager {
     private const val KEY_LATEST_CODE = "latest_code"
     private const val KEY_MESSAGE = "message"
     private const val KEY_APK_PATH = "apk_path"
+    private const val KEY_CHECKING = "checking"
+    private const val KEY_PROGRESS = "progress"
 
     internal fun preferences(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -83,7 +88,10 @@ object UpdateManager {
         val downloaded = !path.isNullOrBlank() && File(path).isFile
         val latestCode = prefs.getInt(KEY_LATEST_CODE, 0)
         val latestVersion = prefs.getString(KEY_LATEST_VERSION, null)
+        val checking = prefs.getBoolean(KEY_CHECKING, false)
+        val progress = prefs.getInt(KEY_PROGRESS, 0)
         val message = when {
+            checking -> prefs.getString(KEY_MESSAGE, "جارٍ فحص التحديثات...") ?: "جارٍ فحص التحديثات..."
             downloaded -> "التحديث الجديد جاهز للتثبيت."
             latestCode > BuildConfig.VERSION_CODE -> prefs.getString(KEY_MESSAGE, "يتوفر تحديث جديد.") ?: "يتوفر تحديث جديد."
             prefs.contains(KEY_MESSAGE) -> prefs.getString(KEY_MESSAGE, "لم يتم التحقق بعد.") ?: "لم يتم التحقق بعد."
@@ -94,7 +102,9 @@ object UpdateManager {
             BuildConfig.VERSION_CODE,
             latestVersion,
             message,
-            downloaded
+            downloaded,
+            checking,
+            progress
         )
     }
 
@@ -104,8 +114,26 @@ object UpdateManager {
         return prefs.getInt(KEY_LATEST_CODE, 0) == versionCode && File(path).isFile && File(path).length() > 0L
     }
 
+    internal fun saveChecking(context: Context) {
+        preferences(context).edit()
+            .putBoolean(KEY_CHECKING, true)
+            .putInt(KEY_PROGRESS, 0)
+            .putString(KEY_MESSAGE, "جارٍ الاتصال بخادم التحديث...")
+            .apply()
+    }
+
+    internal fun saveProgress(context: Context, message: String, progress: Int) {
+        preferences(context).edit()
+            .putBoolean(KEY_CHECKING, true)
+            .putInt(KEY_PROGRESS, progress.coerceIn(0, 100))
+            .putString(KEY_MESSAGE, message)
+            .apply()
+    }
+
     internal fun saveNoUpdate(context: Context, latestVersion: String, latestCode: Int) {
         preferences(context).edit()
+            .putBoolean(KEY_CHECKING, false)
+            .putInt(KEY_PROGRESS, 100)
             .putString(KEY_LATEST_VERSION, latestVersion)
             .putInt(KEY_LATEST_CODE, latestCode)
             .putString(KEY_MESSAGE, "أنت تستخدم أحدث إصدار.")
@@ -115,6 +143,8 @@ object UpdateManager {
 
     internal fun saveAvailable(context: Context, version: String, code: Int, apk: File) {
         preferences(context).edit()
+            .putBoolean(KEY_CHECKING, false)
+            .putInt(KEY_PROGRESS, 100)
             .putString(KEY_LATEST_VERSION, version)
             .putInt(KEY_LATEST_CODE, code)
             .putString(KEY_MESSAGE, "تم تنزيل التحديث والتحقق من سلامته. أصبح جاهزًا للتثبيت.")
@@ -123,7 +153,11 @@ object UpdateManager {
     }
 
     internal fun saveFailure(context: Context, message: String) {
-        preferences(context).edit().putString(KEY_MESSAGE, message).apply()
+        preferences(context).edit()
+            .putBoolean(KEY_CHECKING, false)
+            .putInt(KEY_PROGRESS, 0)
+            .putString(KEY_MESSAGE, message)
+            .apply()
     }
 
     internal fun apkFile(context: Context): File? {
@@ -139,7 +173,9 @@ class AppUpdateWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
+            UpdateManager.saveProgress(applicationContext, "جارٍ الاتصال بخادم التحديث...", 0)
             val release = getJson(RELEASE_API)
+            UpdateManager.saveProgress(applicationContext, "تم الاتصال. جارٍ فحص رقم الإصدار...", 0)
             val tag = release.optString("tag_name")
             val parsed = Regex("^unblock-v(.+)-(\\d+)$").matchEntire(tag)
                 ?: throw IllegalStateException("صيغة إصدار التحديث غير صحيحة.")
@@ -165,13 +201,16 @@ class AppUpdateWorker(
             }
             val apk = apkUrl ?: throw IllegalStateException("ملف APK غير موجود في الإصدار.")
             val checksum = checksumUrl ?: throw IllegalStateException("ملف التحقق من سلامة APK غير موجود.")
+            UpdateManager.saveProgress(applicationContext, "يوجد تحديث جديد. جارٍ تنزيل ملف التطبيق...", 0)
             val targetDir = File(applicationContext.filesDir, "updates").apply { mkdirs() }
             val temporary = File(targetDir, "update.apk.part")
             val target = File(targetDir, "update.apk")
             temporary.delete()
-            download(apk, temporary)
-            val expectedHash = URL(checksum).openStream().bufferedReader().use { it.readText() }
-                .trim().substringBefore(" ").lowercase(Locale.US)
+            download(apk, temporary) { percent ->
+                UpdateManager.saveProgress(applicationContext, "جارٍ تنزيل التحديث... $percent%", percent)
+            }
+            UpdateManager.saveProgress(applicationContext, "اكتمل التنزيل. جارٍ التحقق من سلامة الملف...", 100)
+            val expectedHash = readChecksum(checksum).trim().substringBefore(Regex("\\s")).lowercase(Locale.US)
             val actualHash = sha256(temporary)
             if (!expectedHash.matches(Regex("^[a-f0-9]{64}$")) || expectedHash != actualHash) {
                 temporary.delete()
@@ -185,7 +224,7 @@ class AppUpdateWorker(
         } catch (error: Exception) {
             UpdateManager.saveFailure(
                 applicationContext,
-                "تعذر فحص أو تنزيل التحديث: ${error.message ?: "خطأ اتصال"}"
+                "فشل التحديث: ${error.javaClass.simpleName} — ${error.message ?: "تحقق من اتصال الإنترنت وحاول مرة أخرى."}"
             )
             if (runAttemptCount < 3) Result.retry() else Result.failure()
         }
@@ -208,7 +247,7 @@ class AppUpdateWorker(
         }
     }
 
-    private fun download(address: String, destination: File) {
+    private fun download(address: String, destination: File, onProgress: (Int) -> Unit) {
         val connection = (URL(address).openConnection() as HttpURLConnection).apply {
             connectTimeout = 20000
             readTimeout = 30000
@@ -223,6 +262,8 @@ class AppUpdateWorker(
                 destination.outputStream().buffered().use { output ->
                     val buffer = ByteArray(64 * 1024)
                     var total = 0L
+                    val expectedLength = connection.contentLengthLong
+                    var lastReported = -1
                     while (true) {
                         val count = input.read(buffer)
                         if (count < 0) break
@@ -231,12 +272,37 @@ class AppUpdateWorker(
                             throw IllegalStateException("حجم ملف التحديث أكبر من الحد المسموح.")
                         }
                         output.write(buffer, 0, count)
+                        if (expectedLength > 0L) {
+                            val percent = ((total * 100L) / expectedLength).toInt().coerceIn(0, 100)
+                            if (percent != lastReported) {
+                                lastReported = percent
+                                onProgress(percent)
+                            }
+                        }
                     }
                 }
             }
+            onProgress(100)
             if (destination.length() < 1_000_000L) {
                 throw IllegalStateException("ملف التحديث غير مكتمل.")
             }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun readChecksum(address: String): String {
+        val connection = (URL(address).openConnection() as HttpURLConnection).apply {
+            connectTimeout = 15000
+            readTimeout = 20000
+            instanceFollowRedirects = true
+            setRequestProperty("User-Agent", "UNBLOCK-Android-Updater")
+        }
+        return try {
+            if (connection.responseCode !in 200..299) {
+                throw IllegalStateException("تعذر تنزيل ملف التحقق: HTTP ${connection.responseCode}")
+            }
+            connection.inputStream.bufferedReader().use { it.readText() }
         } finally {
             connection.disconnect()
         }
