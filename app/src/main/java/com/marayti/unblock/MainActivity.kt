@@ -16,7 +16,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.foundation.Canvas
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,9 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
@@ -130,6 +127,8 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     var showSettings by remember { mutableStateOf(false) }
+    var emailSubject by remember { mutableStateOf("") }
+    var emailBody by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         val message = "UNBLOCK"
@@ -193,27 +192,22 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                         Box(Modifier.fillMaxWidth((step + 1) / 8f).height(4.dp).background(Mint, RoundedCornerShape(8.dp)))
                     }
                     val borderMotion = rememberInfiniteTransition(label = "rainbow-border")
-                    val borderAngle by borderMotion.animateFloat(
+                    val borderPhase by borderMotion.animateFloat(
                         initialValue = 0f,
-                        targetValue = 360f,
-                        animationSpec = infiniteRepeatable(animation = tween(4200, easing = LinearEasing)),
-                        label = "border-angle"
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(animation = tween(5200, easing = LinearEasing)),
+                        label = "border-phase"
                     )
+                    val borderColors = listOf(
+                        Color(0xFFFF4D8D), Color(0xFFFFC857), Color(0xFF6DFFB8),
+                        Color(0xFF45D9FF), Color(0xFF8C70FF), Color(0xFFFF4D8D)
+                    )
+                    val movingStops = borderColors.mapIndexed { index, color ->
+                        ((index.toFloat() / borderColors.size + borderPhase) % 1f) to color
+                    }.sortedBy { it.first }.toTypedArray()
                     Card(
-                        modifier = Modifier.fillMaxWidth().drawBehind {
-                            rotate(borderAngle, center) {
-                            drawRoundRect(
-                                brush = Brush.sweepGradient(
-                                    listOf(
-                                        Color(0xFFFF4D8D), Color(0xFFFFC857), Color(0xFF6DFFB8),
-                                        Color(0xFF45D9FF), Color(0xFF8C70FF), Color(0xFFFF4D8D)
-                                    )
-                                ),
-                                cornerRadius = CornerRadius(28.dp.toPx()),
-                                style = Stroke(width = 2.5.dp.toPx())
-                            )
-                            }
-                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(2.dp, Brush.sweepGradient(movingStops)),
                         colors = CardDefaults.cardColors(containerColor = Panel.copy(alpha = 0.97f)),
                         shape = RoundedCornerShape(28.dp)
                     ) {
@@ -280,7 +274,10 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                     SummaryLine("نوع المراجعة", requestLabel(requestType))
                                     SummaryLine("صيغة الرسالة", outputLabel(outputType))
                                     SummaryLine("فحص الصورة", if (imageAccepted) "تم بنجاح" else "غير مكتمل")
-                                    Text("هنفتح تطبيق البريد برسالة جاهزة. راجعها واضغط إرسال بنفسك؛ التطبيق مش بيبعت رسائل من غير إذنك.", color = Muted, fontSize = 12.sp, textAlign = TextAlign.End)
+                                    Text("معاينة الرسالة قبل فتح البريد", color = Mint, fontWeight = FontWeight.Bold)
+                                    Text("الموضوع: $emailSubject", color = Color.White, fontSize = 13.sp, textAlign = TextAlign.End)
+                                    Text(emailBody.ifBlank { "نص الطلب سيظهر هنا قبل فتح تطبيق البريد." }, color = Muted, fontSize = 12.sp, textAlign = TextAlign.End)
+                                    Text("هنفتح تطبيق البريد بالعنوان والنص كاملين. راجع الرسالة واضغط إرسال بنفسك؛ التطبيق لا يرسل دون إذنك.", color = Muted, fontSize = 11.sp, textAlign = TextAlign.End)
                                 }
                             }
                             if (error.isNotBlank()) Text(error, color = Color(0xFFFF8D8D), textAlign = TextAlign.End)
@@ -300,40 +297,50 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                 else -> ""
                             }
                             if (error.isBlank()) {
-                                if (step < 7) step++ else {
-                                    val message = runCatching {
-                                        when (outputType) {
-                                            "short" -> AppealTemplates.buildShort(severity, phone, reason, requestType, evidence)
-                                            "arabic" -> AppealTemplates.buildArabic(severity, phone, reason, requestType, evidence, fullName)
-                                            "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName)
-                                            "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName)
-                                            "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName)
-                                            else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)
+                                if (step < 7) {
+                                    if (step == 6) {
+                                        val message = runCatching {
+                                            when (outputType) {
+                                                "short" -> AppealTemplates.buildShort(severity, phone, reason, requestType, evidence)
+                                                "arabic" -> AppealTemplates.buildArabic(severity, phone, reason, requestType, evidence, fullName)
+                                                "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName)
+                                                "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName)
+                                                "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName)
+                                                else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)
+                                            }
+                                        }.getOrElse { it.message ?: "تعذر تجهيز الرسالة" }
+                                        val firstLine = message.lineSequence().firstOrNull().orEmpty()
+                                        emailSubject = when {
+                                            firstLine.startsWith("Subject:") -> firstLine.removePrefix("Subject:").trim()
+                                            firstLine.startsWith("الموضوع:") -> firstLine.removePrefix("الموضوع:").trim()
+                                            else -> "WhatsApp account review request - $phone"
                                         }
-                                    }.getOrElse { it.message ?: "تعذر تجهيز الرسالة" }
-                                    val firstLine = message.lineSequence().firstOrNull().orEmpty()
-                                    val hasSubject = firstLine.startsWith("Subject:") || firstLine.startsWith("الموضوع:")
-                                    val subject = when {
-                                        firstLine.startsWith("Subject:") -> firstLine.removePrefix("Subject:").trim()
-                                        firstLine.startsWith("الموضوع:") -> firstLine.removePrefix("الموضوع:").trim()
-                                        else -> "WhatsApp account review request - $phone"
+                                        emailBody = if (firstLine.startsWith("Subject:") || firstLine.startsWith("الموضوع:")) {
+                                            message.substringAfter("\n\n", message)
+                                        } else message
+                                        if (message.startsWith("تعذر")) error = message
                                     }
-                                    val body = if (hasSubject) message.substringAfter("\n\n", "") else message
-                                    val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                                        data = Uri.parse("mailto:support@whatsapp.com")
-                                        putExtra(Intent.EXTRA_SUBJECT, subject)
-                                        putExtra(Intent.EXTRA_TEXT, body)
+                                    if (error.isBlank()) step++
+                                } else {
+                                    val emailIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "message/rfc822"
+                                        putExtra(Intent.EXTRA_EMAIL, arrayOf("support@whatsapp.com"))
+                                        putExtra(Intent.EXTRA_SUBJECT, emailSubject)
+                                        putExtra(Intent.EXTRA_TEXT, emailBody)
                                     }
                                     try {
-                                        context.startActivity(emailIntent)
+                                        context.startActivity(Intent.createChooser(emailIntent, "إرسال طلب مراجعة واتساب"))
                                     } catch (_: Exception) {
-                                        error = "مفيش تطبيق بريد مثبت. ثبّت Gmail أو تطبيق بريد ثم حاول تاني."
+                                        error = "لم يتم العثور على تطبيق بريد. ثبّت Gmail أو تطبيق بريد ثم حاول مرة أخرى."
                                     }
                                 }
                             }
                         },
                         modifier = Modifier.weight(2f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black, contentColor = Mint)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (step == 7) Color.Black else Color.Transparent,
+                            contentColor = Mint
+                        )
                     ) { if (step == 7) Text("فتح البريد وتجهيز الطلب") else HatemAnimatedLabel() }
                 }
             }
