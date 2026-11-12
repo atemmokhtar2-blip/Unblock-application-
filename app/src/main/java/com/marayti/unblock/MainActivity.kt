@@ -683,7 +683,7 @@ private fun SettingsScreen(
             Icon(Icons.Filled.Settings, contentDescription = null, tint = Color(0xFF7CF7E2), modifier = Modifier.rotate(settingsTitleRotation))
             Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Panel.copy(alpha = 0.78f)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFF39DCC3), Color(0xFFEC70C5))))) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1B2744)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFF39DCC3), Color(0xFFEC70C5))))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Info, contentDescription = null, tint = Mint)
@@ -692,15 +692,15 @@ private fun SettingsScreen(
                 Text("فحص محلي لصور إشعارات حظر واتساب وتجهيز طلب مراجعة. لا يتم رفع الصور إلى أي خادم.", color = Muted, textAlign = TextAlign.End)
             }
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Mint.copy(alpha = 0.35f))) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF10313D)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFF4CCDBB).copy(alpha = 0.55f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Bolt, contentDescription = null, tint = Mint)
-                    Text("إصدار التطبيق والتحديثات", color = Mint, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                    Text("إصدار التطبيق", color = Color(0xFF72E8D0), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("الإصدار المثبت: ${displayedUpdateStatus.currentVersion} (رقم ${displayedUpdateStatus.currentCode})", color = Color.White, textAlign = TextAlign.End)
-                Text("أحدث إصدار: ${displayedUpdateStatus.latestVersion ?: "جارٍ التحقق"}", color = Muted, textAlign = TextAlign.End)
-                Text(displayedUpdateStatus.message, color = if (displayedUpdateStatus.downloaded) Mint else Muted, textAlign = TextAlign.End)
+                Text("الإصدار الحالي: ${displayedUpdateStatus.currentVersion} (رقم ${displayedUpdateStatus.currentCode})", color = Color(0xFF8EDBFF), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
+                Text("أحدث إصدار: ${displayedUpdateStatus.latestVersion ?: "جارٍ التحقق"}", color = Color(0xFFFFD27A), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
+                Text(displayedUpdateStatus.message, color = if (displayedUpdateStatus.downloaded) Color(0xFF72E8B5) else Color(0xFFC4D8F2), fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
                 if (displayedUpdateStatus.downloaded) {
                     Button(onClick = onInstallUpdate, modifier = Modifier.fillMaxWidth()) {
                         Text("تثبيت التحديث")
@@ -709,10 +709,9 @@ private fun SettingsScreen(
                 OutlinedButton(onClick = onCheckUpdates, modifier = Modifier.fillMaxWidth()) {
                     Text("التحقق من وجود تحديثات")
                 }
-                Text("يعمل التطبيق دون إنترنت. يتم فحص التحديثات عند توفر الاتصال فقط.", color = Muted, fontSize = 12.sp, textAlign = TextAlign.End)
             }
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(24.dp)) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF25213F)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFF9B83E8).copy(alpha = 0.35f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Send, contentDescription = null, tint = Mint)
