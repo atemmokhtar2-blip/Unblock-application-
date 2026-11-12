@@ -179,14 +179,11 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalAlignment = Alignment.End
             ) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("UNBLOCK  /  WHATSAPP", color = Mint, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                     OutlinedButton(onClick = { showSettings = true }) { Text("الإعدادات") }
                 }
 
                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Text("مساعد مراجعة الحساب", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                    Text("هنمشي معاك خطوة بخطوة. بياناتك وصورك بتفضل على جهازك.", color = Muted, fontSize = 13.sp, textAlign = TextAlign.End)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         Text("الخطوة ${(step + 1).coerceAtMost(8)} من 8", color = Mint, fontSize = 12.sp)
                     }
@@ -230,7 +227,6 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                         singleLine = true,
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                                     )
-                                    Text("11 رقمًا ويبدأ بـ 010 أو 011 أو 012 أو 015", color = Muted, fontSize = 11.sp)
                                 }
                                 1 -> {
                                     StepHeading("02", "صورة إشعار الحظر", "اختار لقطة شاشة واضحة من داخل واتساب. الفحص بيتم محليًا.")
