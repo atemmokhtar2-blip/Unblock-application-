@@ -75,8 +75,10 @@ object UpdateScheduler {
                 Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
             )
             .build()
+        // A manual check must always start a fresh worker. KEEP can silently
+        // preserve a stale/failed request and make the Settings button appear broken.
         WorkManager.getInstance(context).enqueueUniqueWork(
-            IMMEDIATE_NAME, ExistingWorkPolicy.KEEP, request
+            IMMEDIATE_NAME, ExistingWorkPolicy.REPLACE, request
         )
     }
 }
