@@ -102,6 +102,10 @@ private val DisplayFont = FontFamily(Font(R.font.alexandria_variable))
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!AppSecurityGuard.isEnvironmentTrusted(this)) {
+            finish()
+            return
+        }
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(
                 primary = Mint, onPrimary = Ink, background = Ink,
