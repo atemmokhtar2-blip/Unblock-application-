@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -200,8 +201,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                     )
                     Card(
                         modifier = Modifier.fillMaxWidth().drawBehind {
-                            drawContext.canvas.save()
-                            drawContext.transform.rotate(borderAngle, center.x, center.y)
+                            rotate(borderAngle, center) {
                             drawRoundRect(
                                 brush = Brush.sweepGradient(
                                     listOf(
@@ -212,7 +212,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                 cornerRadius = CornerRadius(28.dp.toPx()),
                                 style = Stroke(width = 2.5.dp.toPx())
                             )
-                            drawContext.canvas.restore()
+                            }
                         },
                         colors = CardDefaults.cardColors(containerColor = Panel.copy(alpha = 0.97f)),
                         shape = RoundedCornerShape(28.dp)
