@@ -24,6 +24,20 @@ android {
     }
 
     buildFeatures { compose = true }
+
+    // R8 obfuscation and resource shrinking for release builds.
+    // CI debug signing is only for sideload testing, never Play Store production.
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
