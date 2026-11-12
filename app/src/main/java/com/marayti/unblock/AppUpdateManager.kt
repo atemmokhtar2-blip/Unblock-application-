@@ -186,6 +186,9 @@ class AppUpdateWorker(
                 return@withContext Result.success()
             }
             if (UpdateManager.hasDownloadedVersion(applicationContext, versionCode)) {
+                UpdateManager.apkFile(applicationContext)?.let { existingApk ->
+                    UpdateManager.saveAvailable(applicationContext, versionName, versionCode, existingApk)
+                }
                 return@withContext Result.success()
             }
 
