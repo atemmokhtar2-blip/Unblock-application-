@@ -6,7 +6,7 @@ import org.junit.Test
 
 class LocalScreenshotVerifierTest {
     private fun verify(text: String, confidence: Int = 95) =
-        LocalScreenshotVerifier(null as android.content.Context?).verifyRecognizedTextForTest(text, confidence)
+        LocalScreenshotVerifier(null).verifyRecognizedTextForTest(text, confidence)
 
     @Test
     fun rejectsUnrelatedImagesImmediatelyWithWhatsAppSpecificMessage() {
