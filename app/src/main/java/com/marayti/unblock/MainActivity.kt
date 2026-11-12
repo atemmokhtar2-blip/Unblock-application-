@@ -158,7 +158,7 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
         )
         OutlinedTextField(
             value = phone,
-            onValueChange = { phone = it.filter(Char::isDigit).take(11) },
+            onValueChange = { phone = it.filter { ch -> ch in '0'..'9' }.take(11) },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("رقم واتساب المصري") },
             placeholder = { Text("01xxxxxxxxx") },
