@@ -129,6 +129,23 @@ jobs:
           files: |
             release-assets/unblock-release.apk
             release-assets/unblock-release.apk.sha256
+      - name: Publish public update manifest
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.HAS_RELEASE_SIGNING == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION_NAME="${{ steps.release_version.outputs.name }}"
+          VERSION_CODE="${{ steps.release_version.outputs.code }}"
+          TAG="unblock-v${VERSION_NAME}-${VERSION_CODE}"
+          printf '{\n  "versionName": "%s",\n  "versionCode": %s,\n  "apkUrl": "https://github.com/%s/releases/download/%s/unblock-release.apk",\n  "checksumUrl": "https://github.com/%s/releases/download/%s/unblock-release.apk.sha256"\n}\n' \
+            "$VERSION_NAME" "$VERSION_CODE" "$GITHUB_REPOSITORY" "$TAG" "$GITHUB_REPOSITORY" "$TAG" > update.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add update.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: publish update manifest v${VERSION_NAME} [skip ci]"
+            git push
+          fi
       - name: Explain missing signing secrets
         if: ${{ github.event_name != 'pull_request' && env.HAS_RELEASE_SIGNING != 'true' }}
         run: echo "Release APK skipped. Add the four ANDROID_* signing secrets to enable persistent signed releases."

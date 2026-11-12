@@ -195,13 +195,10 @@ class AppUpdateWorker(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
             UpdateManager.saveProgress(applicationContext, "جارٍ الاتصال بخادم التحديث...", 0)
-            val release = getJson(RELEASE_API)
+            val manifest = getJson(UPDATE_MANIFEST_URL)
             UpdateManager.saveProgress(applicationContext, "تم الاتصال. جارٍ فحص رقم الإصدار...", 0)
-            val tag = release.optString("tag_name")
-            val parsed = Regex("^unblock-v(.+)-(\\d+)$").matchEntire(tag)
-                ?: throw IllegalStateException("صيغة إصدار التحديث غير صحيحة.")
-            val versionName = parsed.groupValues[1]
-            val versionCode = parsed.groupValues[2].toInt()
+            val versionName = manifest.getString("versionName")
+            val versionCode = manifest.getInt("versionCode")
             if (versionCode <= BuildConfig.VERSION_CODE) {
                 UpdateManager.saveNoUpdate(applicationContext, versionName, versionCode)
                 return@withContext Result.success()
@@ -213,18 +210,12 @@ class AppUpdateWorker(
                 return@withContext Result.success()
             }
 
-            val assets = release.getJSONArray("assets")
-            var apkUrl: String? = null
-            var checksumUrl: String? = null
-            for (index in 0 until assets.length()) {
-                val asset = assets.getJSONObject(index)
-                when (asset.optString("name")) {
-                    APK_ASSET -> apkUrl = asset.optString("browser_download_url")
-                    CHECKSUM_ASSET -> checksumUrl = asset.optString("browser_download_url")
-                }
-            }
-            val apk = apkUrl ?: throw IllegalStateException("ملف APK غير موجود في الإصدار.")
-            val checksum = checksumUrl ?: throw IllegalStateException("ملف التحقق من سلامة APK غير موجود.")
+            val apk = manifest.optString("apkUrl")
+                .takeIf { it.startsWith("https://") }
+                ?: throw IllegalStateException("رابط ملف APK غير موجود في ملف التحديث.")
+            val checksum = manifest.optString("checksumUrl")
+                .takeIf { it.startsWith("https://") }
+                ?: throw IllegalStateException("رابط ملف التحقق غير موجود في ملف التحديث.")
             UpdateManager.saveProgress(applicationContext, "يوجد تحديث جديد. جارٍ تنزيل ملف التطبيق...", 0)
             val targetDir = File(applicationContext.filesDir, "updates").apply { mkdirs() }
             val temporary = File(targetDir, "update.apk.part")
@@ -260,6 +251,7 @@ class AppUpdateWorker(
             readTimeout = 20000
             setRequestProperty("Accept", "application/vnd.github+json")
             setRequestProperty("User-Agent", "UNBLOCK-Android-Updater")
+            setRequestProperty("Cache-Control", "no-cache")
         }
         return try {
             if (connection.responseCode !in 200..299) {
@@ -377,9 +369,7 @@ class AppUpdateWorker(
     }
 
     companion object {
-        private const val RELEASE_API = "https://api.github.com/repos/atemmokhtar2-blip/Unblock-application-/releases/latest"
-        private const val APK_ASSET = "unblock-release.apk"
-        private const val CHECKSUM_ASSET = "unblock-release.apk.sha256"
+        private const val UPDATE_MANIFEST_URL = "https://raw.githubusercontent.com/atemmokhtar2-blip/Unblock-application-/main/update.json"
         private const val CHANNEL_ID = "unblock_updates"
         private const val NOTIFICATION_ID = 7303
     }
