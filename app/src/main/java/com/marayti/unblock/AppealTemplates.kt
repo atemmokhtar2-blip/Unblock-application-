@@ -22,14 +22,20 @@ object AppealTemplates {
         "review" to "I respectfully request a review of this restriction and my account status."
     )
 
-    fun build(severity: String, phone: String, reason: String, requestType: String): String {
+    fun build(severity: String, phone: String, reason: String, requestType: String, evidence: VerificationResult? = null): String {
+        val evidenceLine = listOfNotNull(
+            evidence?.date?.takeIf { it.isNotBlank() }?.let { "Notice date: $it" },
+            evidence?.restrictionType?.takeIf { it.isNotBlank() }?.let { "Restriction type shown in the notice: $it" },
+            evidence?.restrictionReason?.takeIf { it.isNotBlank() }?.let { "Policy wording recognized in the notice: $it" }
+        ).joinToString("\\n")
         return listOf(
             "Subject: Request for review of my WhatsApp account",
             "Dear WhatsApp Support Team,",
             severityText[severity] ?: severityText.getValue("standard"),
             reasonText[reason] ?: reasonText.getValue("unknown"),
             requestText[requestType] ?: requestText.getValue("review"),
-            "Phone number: +20$phone",
+            evidenceLine.takeIf { it.isNotBlank() }?.let { "Case reference (read from the supplied notice):\\n$it" } ?: "",
+            "Phone number: $phone",
             "I am willing to provide any additional information needed. Thank you for taking the time to review my case.",
             "Kind regards"
         ).joinToString("\n\n")
