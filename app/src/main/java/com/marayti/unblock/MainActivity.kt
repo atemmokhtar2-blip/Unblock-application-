@@ -54,6 +54,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.rotate
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -211,7 +212,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
             )
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.24f)))
         } else {
-            AnimatedBackdrop(useRedTheme = !showSettings && step in 2..7)
+            AnimatedBackdrop(useRedTheme = !showSettings && step in 2..7, useSettingsTheme = showSettings)
         }
         if (showSettings) {
             SettingsScreen(onBack = { showSettings = false }) {
@@ -223,9 +224,16 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalAlignment = Alignment.End
             ) {
+                val settingsIconMotion = rememberInfiniteTransition(label = "settings-icon-spin")
+                val settingsIconRotation by settingsIconMotion.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 360f,
+                    animationSpec = infiniteRepeatable(animation = tween(4200, easing = LinearEasing)),
+                    label = "settings-icon-rotation"
+                )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                     OutlinedButton(onClick = { showSettings = true }) {
-                        Icon(Icons.Filled.Settings, contentDescription = "الإعدادات")
+                        Icon(Icons.Filled.Settings, contentDescription = "الإعدادات", modifier = Modifier.rotate(settingsIconRotation))
                         Spacer(Modifier.width(8.dp))
                         Text("الإعدادات")
                     }
@@ -513,14 +521,29 @@ private fun choiceIcon(value: String): ImageVector = when (value) {
 }
 
 @androidx.compose.runtime.Composable
-private fun AnimatedBackdrop(useRedTheme: Boolean = false) {
+private fun AnimatedBackdrop(useRedTheme: Boolean = false, useSettingsTheme: Boolean = false) {
     Canvas(Modifier.fillMaxSize()) {
         drawRect(brush = Brush.linearGradient(
-            colors = if (useRedTheme) listOf(Color(0xFF020203), Color(0xFF16070B), Color(0xFF350B16), Color(0xFF080609)) else listOf(Color(0xFF07131F), Color(0xFF102A38), Color(0xFF11152B)),
+            colors = when {
+                useSettingsTheme -> listOf(Color(0xFF090817), Color(0xFF17102F), Color(0xFF082C35), Color(0xFF32132F), Color(0xFF090817))
+                useRedTheme -> listOf(Color(0xFF020203), Color(0xFF16070B), Color(0xFF350B16), Color(0xFF080609))
+                else -> listOf(Color(0xFF07131F), Color(0xFF102A38), Color(0xFF11152B))
+            },
             start = androidx.compose.ui.geometry.Offset(0f, 0f),
             end = androidx.compose.ui.geometry.Offset(size.width, size.height)
         ))
-        if (useRedTheme) {
+        if (useSettingsTheme) {
+            drawCircle(Color(0x665F35C9), radius = size.minDimension * 0.58f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.04f, size.height * 0.16f))
+            drawCircle(Color(0x5540D9B0), radius = size.minDimension * 0.52f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.98f, size.height * 0.34f))
+            drawCircle(Color(0x554B8DFF), radius = size.minDimension * 0.48f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.12f, size.height * 0.94f))
+            drawCircle(Color(0x55E34FA8), radius = size.minDimension * 0.40f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.96f, size.height * 0.88f))
+            drawCircle(Color(0x3345E8F5), radius = size.minDimension * 0.30f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.52f, size.height * 0.52f))
+        } else if (useRedTheme) {
             drawCircle(Color(0x35B51632), radius = size.minDimension * 0.52f,
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.04f, size.height * 0.20f))
             drawCircle(Color(0x258C1028), radius = size.minDimension * 0.42f,
@@ -542,10 +565,12 @@ private fun SettingsScreen(onBack: () -> Unit, onOpenTelegram: () -> Unit) {
         horizontalAlignment = Alignment.End
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Icon(Icons.Filled.Settings, contentDescription = null, tint = Mint)
+            val settingsTitleMotion = rememberInfiniteTransition(label = "settings-title-spin")
+            val settingsTitleRotation by settingsTitleMotion.animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(animation = tween(5200, easing = LinearEasing)), label = "settings-title-rotation")
+            Icon(Icons.Filled.Settings, contentDescription = null, tint = Color(0xFF7CF7E2), modifier = Modifier.rotate(settingsTitleRotation))
             Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(24.dp)) {
+        Card(colors = CardDefaults.cardColors(containerColor = Panel.copy(alpha = 0.78f)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFF39DCC3), Color(0xFFEC70C5))))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Info, contentDescription = null, tint = Mint)
