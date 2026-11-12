@@ -22,6 +22,9 @@ class LocalScreenshotVerifier(private val context: Context) {
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
         if (options.outWidth < 600 || options.outHeight < 600) return reject("دقة الصورة أقل من الحد المطلوب")
+        if (options.outWidth > 8_000 || options.outHeight > 8_000 ||
+            options.outWidth.toLong() * options.outHeight.toLong() > 40_000_000L
+        ) return reject("أبعاد الصورة كبيرة جدًا للفحص الآمن")
         val ratio = options.outWidth.toFloat() / options.outHeight.toFloat()
         if (ratio < 0.3f || ratio > 3.5f) return reject("أبعاد الصورة غير مناسبة")
 
