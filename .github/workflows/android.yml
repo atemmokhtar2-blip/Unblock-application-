@@ -1,4 +1,5 @@
 name: Android build
+# Fresh verification run after repository signing secrets were added
 
 concurrency:
   group: android-${{ github.ref }}
