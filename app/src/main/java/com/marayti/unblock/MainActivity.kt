@@ -731,10 +731,9 @@ private fun SettingsScreen(
                 }
                 OutlinedButton(
                     onClick = onCheckUpdates,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !displayedUpdateStatus.checking
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (displayedUpdateStatus.checking) "جارٍ الفحص..." else "التحقق من وجود تحديثات")
+                    Text(if (displayedUpdateStatus.checking) "إعادة فحص التحديثات" else "التحقق من وجود تحديثات")
                 }
             }
         }
