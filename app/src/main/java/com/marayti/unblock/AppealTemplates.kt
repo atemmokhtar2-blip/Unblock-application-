@@ -27,14 +27,14 @@ object AppealTemplates {
             evidence?.date?.takeIf { it.isNotBlank() }?.let { "Notice date: $it" },
             evidence?.restrictionType?.takeIf { it.isNotBlank() }?.let { "Restriction type shown in the notice: $it" },
             evidence?.restrictionReason?.takeIf { it.isNotBlank() }?.let { "Policy wording recognized in the notice: $it" }
-        ).joinToString("\\n")
+        ).joinToString("\n")
         return listOf(
             "Subject: Request for review of my WhatsApp account",
             "Dear WhatsApp Support Team,",
             severityText[severity] ?: severityText.getValue("standard"),
             reasonText[reason] ?: reasonText.getValue("unknown"),
             requestText[requestType] ?: requestText.getValue("review"),
-            evidenceLine.takeIf { it.isNotBlank() }?.let { "Case reference (read from the supplied notice):\\n$it" } ?: "",
+            evidenceLine.takeIf { it.isNotBlank() }?.let { "Case reference (read from the supplied notice):\n$it" } ?: "",
             "Phone number: $phone",
             "I am willing to provide any additional information needed. Thank you for taking the time to review my case.",
             "Kind regards"
