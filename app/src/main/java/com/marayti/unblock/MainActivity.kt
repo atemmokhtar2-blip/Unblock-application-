@@ -275,7 +275,12 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                             if (error.isBlank()) {
                                 if (step < 7) step++ else {
                                     val message = runCatching {
-                                        when (outputType) {\n                                            "short" -> AppealTemplates.buildShort(severity, phone, reason, requestType, evidence)\n                                            "arabic" -> AppealTemplates.buildArabic(severity, phone, reason, requestType, evidence, fullName)\n                                            "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName)\n                                            "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName)\n                                            "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName)\n                                            else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)\n                                        }
+                                        when (outputType) {
+                                            "short" -> AppealTemplates.buildShort(severity, phone, reason, requestType, evidence)
+                                            "arabic" -> AppealTemplates.buildArabic(severity, phone, reason, requestType, evidence, fullName)
+                                            "followup" -> AppealTemplates.buildFollowUp(severity, phone, reason, requestType, evidence, fullName)
+                                            "escalation" -> AppealTemplates.buildEscalation(severity, phone, reason, requestType, evidence, fullName)
+                                            "final" -> AppealTemplates.buildFinalNotice(severity, phone, reason, requestType, evidence, fullName)\n                                            else -> AppealTemplates.build(severity, phone, reason, requestType, evidence, fullName)\n                                        }
                                     }.getOrElse { it.message ?: "تعذر تجهيز الرسالة" }
                                     val subject = message.lineSequence().firstOrNull()?.removePrefix("Subject: ") ?: "طلب مراجعة حساب واتساب"
                                     val body = message.substringAfter("\n\n", message)
@@ -397,4 +402,5 @@ private fun reasonLabel(value: String) = when (value) {
     "mistake" -> "أعتقد أنه خطأ"; "unusual" -> "نشاط غير معتاد"; "reports" -> "بلاغات أو شكاوى"
     "content" -> "مشكلة محتوى"; "other" -> "سبب آخر"; else -> "لا أعرف السبب"
 }
-private fun requestLabel(value: String) = when (value) { "human" -> "مراجعة بشرية"; "urgent" -> "طلب عاجل"; "explain" -> "توضيح السبب"; else -> "مراجعة عادية" }\nprivate fun outputLabel(value: String) = when (value) { "short" -> "رسالة قصيرة"; "arabic" -> "النسخة العربية"; "followup" -> "متابعة"; "escalation" -> "تصعيد"; "final" -> "إشعار أخير"; else -> "خطاب كامل" }
+private fun requestLabel(value: String) = when (value) { "human" -> "مراجعة بشرية"; "urgent" -> "طلب عاجل"; "explain" -> "توضيح السبب"; else -> "مراجعة عادية" }
+private fun outputLabel(value: String) = when (value) { "short" -> "رسالة قصيرة"; "arabic" -> "النسخة العربية"; "followup" -> "متابعة"; "escalation" -> "تصعيد"; "final" -> "إشعار أخير"; else -> "خطاب كامل" }
