@@ -116,10 +116,27 @@ class LocalScreenshotVerifier(private val context: Context) {
         }
         val foreign = if (arabic) listOf("تيليجرام", "تليجرام", "فيسبوك", "انستجرام", "تويتر", "سناب", "تيك توك", "ديسكورد", "سكايب", "فايبر")
             else listOf("telegram", "discord", "viber", "tiktok", "snapchat", "wechat", "twitter", "linkedin", "skype", "kik")
+        // Stage 1: classify the screenshot as WhatsApp-related before checking ban evidence.
+        // Accept common OCR spacing/Arabic spelling variations of the product name.
+        val whatsappAliases = if (arabic) {
+            listOf("واتساب", "واتس اب", "واتسآب", "whatsapp", "whats app")
+        } else {
+            listOf("whatsapp", "whats app", "whats-app")
+        }
+        val isWhatsAppImage = whatsappAliases.any { containsSignal(text, tokens, it) }
+        if (!isWhatsAppImage) {
+            return VerificationResult(
+                accepted = false,
+                message = "تم رفض الصورة فورًا: الصورة لا تحتوي على ما يثبت ارتباطها بواتساب. اختر لقطة شاشة من تطبيق WhatsApp.",
+                recognizedText = raw,
+                confidence = confidence
+            )
+        }
+
+        // Stage 2: a WhatsApp screen alone is not sufficient; require an actual restriction notice.
         val failures = mutableListOf<String>()
         if (tokens.size < 8 || tokens.sumOf { it.length } < 50 || confidence < 50) failures += "وضوح النص"
         if (tokens.distinct().size < 5) failures += "كلمات غير كافية"
-        if (signals.first.none { containsSignal(text, tokens, it) }) failures += "اسم واتساب غير ظاهر"
         if (signals.second.none { containsSignal(text, tokens, it) }) failures += "لا يوجد نص يدل على الحظر"
         if (signals.third.none { containsSignal(text, tokens, it) }) failures += "لا يوجد سبب أو إشارة إلى سياسة المراجعة"
         if (foreign.any { text.contains(it) }) failures += "الصورة تشير إلى منصة أخرى"
