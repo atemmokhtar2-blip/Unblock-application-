@@ -14,8 +14,8 @@ android {
         applicationId = "com.marayti.unblock"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
     }
 
     compileOptions {
@@ -42,32 +42,45 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
 }
 
-// The APK bundles both OCR language models. They are downloaded at build time,
-// so the installed app can perform OCR fully offline.
+// Language models and the Arabic display font are bundled into the APK at build time.
+// The installed application performs all OCR locally and needs no network permission.
 val tessdataDir = layout.projectDirectory.dir("src/main/assets/tessdata")
-tasks.register("downloadTessdata") {
+val fontDir = layout.projectDirectory.dir("src/main/res/font")
+tasks.register("downloadAppAssets") {
     outputs.files(
         tessdataDir.file("eng.traineddata"),
-        tessdataDir.file("ara.traineddata")
+        tessdataDir.file("ara.traineddata"),
+        fontDir.file("alexandria_variable.ttf")
     )
     doLast {
-        val dir = tessdataDir.asFile
-        dir.mkdirs()
-        mapOf(
+        val models = mapOf(
             "eng" to "https://github.com/tesseract-ocr/tessdata_fast/raw/4.1.0/eng.traineddata",
             "ara" to "https://github.com/tesseract-ocr/tessdata_fast/raw/4.1.0/ara.traineddata"
-        ).forEach { (language, source) ->
-            val destination = dir.resolve("$language.traineddata")
+        )
+        tessdataDir.asFile.mkdirs()
+        models.forEach { (language, source) ->
+            val destination = tessdataDir.asFile.resolve("$language.traineddata")
             if (!destination.exists() || destination.length() < 100_000L) {
                 logger.lifecycle("Downloading Tesseract language data: $language")
+                val temporary = destination.resolveSibling(destination.name + ".part")
                 URL(source).openStream().use { input ->
-                    destination.outputStream().use { output -> input.copyTo(output) }
+                    temporary.outputStream().use { output -> input.copyTo(output) }
                 }
-                check(destination.length() > 100_000L) {
-                    "Downloaded Tesseract model $language looks incomplete"
-                }
+                check(temporary.length() > 100_000L) { "Downloaded OCR model $language is incomplete" }
+                check(temporary.renameTo(destination)) { "Could not install OCR model $language" }
             }
+        }
+
+        fontDir.asFile.mkdirs()
+        val font = fontDir.asFile.resolve("alexandria_variable.ttf")
+        if (!font.exists() || font.length() < 100_000L) {
+            logger.lifecycle("Downloading Alexandria Arabic font")
+            val temporary = font.resolveSibling(font.name + ".part")
+            URL("https://github.com/google/fonts/raw/main/ofl/alexandria/Alexandria%5Bwght%5D.ttf")
+                .openStream().use { input -> temporary.outputStream().use { output -> input.copyTo(output) } }
+            check(temporary.length() > 100_000L) { "Downloaded Alexandria font is incomplete" }
+            check(temporary.renameTo(font)) { "Could not install Alexandria font" }
         }
     }
 }
-tasks.named("preBuild").configure { dependsOn("downloadTessdata") }
+tasks.named("preBuild").configure { dependsOn("downloadAppAssets") }
