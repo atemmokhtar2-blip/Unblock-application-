@@ -98,6 +98,7 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
     var phone by remember { mutableStateOf("") }
     var imageStatus by remember { mutableStateOf("لم يتم فحص صورة بعد") }
     var verdictAccepted by remember { mutableStateOf(false) }
+    var evidence by remember { mutableStateOf(VerificationResult(false, "")) }
     var draft by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -106,6 +107,7 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
         if (uri != null) {
             busy = true
             verdictAccepted = false
+            evidence = VerificationResult(false, "")
             draft = ""
             imageStatus = "جاري فحص الصورة محليًا…"
             scope.launch {
@@ -114,6 +116,7 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
                     if (bytes == null) VerificationResult(false, "تعذر قراءة الصورة من الهاتف")
                     else LocalScreenshotVerifier(context).verify(bytes)
                 }
+                evidence = result
                 verdictAccepted = result.accepted
                 imageStatus = result.message
                 busy = false
@@ -155,7 +158,7 @@ private fun UnblockHome(onReadImage: (Uri) -> ByteArray?, onShare: (String) -> U
             draft = when {
                 !verdictAccepted -> "افحص أولًا صورة إشعار حظر واتساب الصحيحة."
                 !phone.matches(Regex("01[0125][0-9]{8}")) -> "راجع الرقم: يجب أن يتكون من 11 رقمًا ويبدأ بـ 010 أو 011 أو 012 أو 015."
-                else -> AppealTemplates.build(severity, phone, reason, requestType)
+                else -> AppealTemplates.build(severity, phone, reason, requestType, evidence)
             }
         }, modifier = Modifier.fillMaxWidth()) { Text("إنشاء طلب المراجعة") }
         if (draft.isNotBlank()) {
