@@ -3,6 +3,8 @@ package com.marayti.unblock
 import android.content.Intent
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.Build
 import androidx.core.app.ActivityCompat
 import android.net.Uri
@@ -109,6 +111,8 @@ private val Muted = Color(0xFFA7B7C3)
 private val DisplayFont = FontFamily(Font(R.font.alexandria_variable))
 
 class MainActivity : ComponentActivity() {
+    private var updateNetworkCallback: ConnectivityManager.NetworkCallback? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!AppSecurityGuard.isEnvironmentTrusted(this)) {
@@ -116,9 +120,15 @@ class MainActivity : ComponentActivity() {
             return
         }
         UpdateScheduler.schedule(this)
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
+            !getSharedPreferences("unblock_update_state", MODE_PRIVATE).getBoolean("notification_permission_requested", false)
+        ) {
+            getSharedPreferences("unblock_update_state", MODE_PRIVATE).edit()
+                .putBoolean("notification_permission_requested", true).apply()
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 7301)
         }
+        registerUpdateNetworkCallback()
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(
                 primary = Mint, onPrimary = Ink, background = Ink,
@@ -153,6 +163,30 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun registerUpdateNetworkCallback() {
+        val connectivity = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                UpdateScheduler.checkNow(this@MainActivity)
+            }
+        }
+        updateNetworkCallback = callback
+        try {
+            connectivity.registerDefaultNetworkCallback(callback)
+        } catch (_: Exception) {
+            updateNetworkCallback = null
+        }
+    }
+
+    override fun onDestroy() {
+        updateNetworkCallback?.let { callback ->
+            val connectivity = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+            try { connectivity.unregisterNetworkCallback(callback) } catch (_: Exception) { }
+        }
+        updateNetworkCallback = null
+        super.onDestroy()
     }
 }
 
