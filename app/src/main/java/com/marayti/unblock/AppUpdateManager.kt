@@ -210,7 +210,7 @@ class AppUpdateWorker(
                 UpdateManager.saveProgress(applicationContext, "جارٍ تنزيل التحديث... $percent%", percent)
             }
             UpdateManager.saveProgress(applicationContext, "اكتمل التنزيل. جارٍ التحقق من سلامة الملف...", 100)
-            val expectedHash = readChecksum(checksum).trim().substringBefore(Regex("\\s")).lowercase(Locale.US)
+            val expectedHash = readChecksum(checksum).trim().substringBefore(" ").lowercase(Locale.US)
             val actualHash = sha256(temporary)
             if (!expectedHash.matches(Regex("^[a-f0-9]{64}$")) || expectedHash != actualHash) {
                 temporary.delete()
