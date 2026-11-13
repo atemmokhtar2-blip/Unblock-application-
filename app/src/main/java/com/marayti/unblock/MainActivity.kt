@@ -661,6 +661,13 @@ private fun choiceIcon(value: String): ImageVector = when (value) {
 
 @androidx.compose.runtime.Composable
 private fun AnimatedBackdrop(useRedTheme: Boolean = false, useSettingsTheme: Boolean = false) {
+    val settingsMotion = rememberInfiniteTransition(label = "settings-blood-red-motion")
+    val settingsPhase by settingsMotion.animateFloat(
+        initialValue = 0f,
+        targetValue = (2f * Math.PI).toFloat(),
+        animationSpec = infiniteRepeatable(animation = tween(9000, easing = LinearEasing)),
+        label = "settings-blood-red-phase"
+    )
     Canvas(Modifier.fillMaxSize()) {
         drawRect(brush = Brush.linearGradient(
             colors = when {
@@ -672,16 +679,18 @@ private fun AnimatedBackdrop(useRedTheme: Boolean = false, useSettingsTheme: Boo
             end = androidx.compose.ui.geometry.Offset(size.width, size.height)
         ))
         if (useSettingsTheme) {
-            drawCircle(Color(0x44B00020), radius = size.minDimension * 0.52f,
-                center = androidx.compose.ui.geometry.Offset(size.width * 0.02f, size.height * 0.12f))
-            drawCircle(Color(0x338D0018), radius = size.minDimension * 0.44f,
-                center = androidx.compose.ui.geometry.Offset(size.width * 0.98f, size.height * 0.42f))
-            drawCircle(Color(0x33C00024), radius = size.minDimension * 0.46f,
-                center = androidx.compose.ui.geometry.Offset(size.width * 0.08f, size.height * 0.96f))
-            drawCircle(Color(0x22800016), radius = size.minDimension * 0.36f,
-                center = androidx.compose.ui.geometry.Offset(size.width * 0.96f, size.height * 0.90f))
-            drawCircle(Color(0x18700012), radius = size.minDimension * 0.28f,
-                center = androidx.compose.ui.geometry.Offset(size.width * 0.52f, size.height * 0.52f))
+            val wave = kotlin.math.sin(settingsPhase.toDouble()).toFloat()
+            val counterWave = kotlin.math.cos(settingsPhase.toDouble()).toFloat()
+            drawCircle(Color(0x77D00024), radius = size.minDimension * 0.58f,
+                center = androidx.compose.ui.geometry.Offset(size.width * (0.08f + 0.12f * wave), size.height * (0.18f + 0.12f * counterWave)))
+            drawCircle(Color(0x66A0001B), radius = size.minDimension * 0.54f,
+                center = androidx.compose.ui.geometry.Offset(size.width * (0.92f - 0.14f * wave), size.height * (0.48f - 0.16f * counterWave)))
+            drawCircle(Color(0x66E00028), radius = size.minDimension * 0.48f,
+                center = androidx.compose.ui.geometry.Offset(size.width * (0.12f + 0.18f * counterWave), size.height * (0.94f - 0.10f * wave)))
+            drawCircle(Color(0x55800016), radius = size.minDimension * 0.42f,
+                center = androidx.compose.ui.geometry.Offset(size.width * (0.90f - 0.16f * counterWave), size.height * (0.88f + 0.10f * wave)))
+            drawCircle(Color(0x44C00024), radius = size.minDimension * 0.34f,
+                center = androidx.compose.ui.geometry.Offset(size.width * (0.50f + 0.20f * wave), size.height * (0.50f + 0.18f * counterWave)))
         } else if (useRedTheme) {
             drawCircle(Color(0x35B51632), radius = size.minDimension * 0.52f,
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.04f, size.height * 0.20f))
@@ -720,10 +729,10 @@ private fun SettingsScreen(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             val settingsTitleMotion = rememberInfiniteTransition(label = "settings-title-spin")
             val settingsTitleRotation by settingsTitleMotion.animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(animation = tween(5200, easing = LinearEasing)), label = "settings-title-rotation")
-            Icon(Icons.Filled.Settings, contentDescription = null, tint = Color(0xFF7CF7E2), modifier = Modifier.rotate(settingsTitleRotation))
+            Icon(Icons.Filled.Settings, contentDescription = null, tint = Color(0xFFFF2448), modifier = Modifier.rotate(settingsTitleRotation))
             Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Color.Black), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFF72D6A8).copy(alpha = 0.60f))) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF4A000B)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.5.dp, Color(0xFFE0002B).copy(alpha = 0.90f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Bolt, contentDescription = null, tint = Mint)
@@ -767,7 +776,7 @@ private fun SettingsScreen(
                 }
             }
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Color.Black), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFFD69A72).copy(alpha = 0.50f))) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF4A000B)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.5.dp, Color(0xFFE0002B).copy(alpha = 0.90f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Send, contentDescription = null, tint = Mint)
