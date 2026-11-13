@@ -123,7 +123,7 @@ class MainActivity : ComponentActivity() {
             finish()
             return
         }
-        if (savedInstanceState == null) AppUsageMetrics.recordOpen()
+        if (savedInstanceState == null) AppUsageMetrics.recordOpen(this)
         UpdateScheduler.schedule(this)
         if (Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
