@@ -5,54 +5,37 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Deep midnight tile -->
-    <path android:fillColor="#071724" android:pathData="M0,0h108v108h-108z" />
-    <path android:fillColor="#0D2A38" android:pathData="M0,0h108v108h-108z" android:fillAlpha="0.72" />
+    <!-- Pure-black launcher tile with a restrained crimson halo -->
+    <path android:fillColor="#030303" android:pathData="M0,0h108v108h-108z" />
+    <path android:fillColor="#310008" android:fillAlpha="0.72"
+        android:pathData="M54,5A49,49 0,1 0,54 103A49,49 0,1 0,54 5" />
 
-    <!-- Subtle inner halo -->
-    <path
-        android:fillColor="#123D49"
-        android:pathData="M54,7A47,47 0,1 0,54 101A47,47 0,1 0,54 7"
-        android:fillAlpha="0.5" />
+    <!-- Modern crowned shield -->
+    <path android:fillColor="#08090C" android:strokeColor="#E51B36"
+        android:strokeWidth="3.2" android:strokeLineJoin="round"
+        android:pathData="M54,20 L83,30 L79,59 C76,77 65,88 54,94 C43,88 32,77 29,59 L25,30 Z" />
+    <path android:fillColor="#00000000" android:strokeColor="#F5F5F5"
+        android:strokeAlpha="0.78" android:strokeWidth="1.3"
+        android:pathData="M54,26 L76,34 L73,58 C71,72 62,81 54,86 C46,81 37,72 35,58 L32,34 Z" />
 
-    <!-- Shield body -->
-    <path
-        android:fillColor="#0A202D"
-        android:strokeColor="#62E0C2"
-        android:strokeWidth="3.2"
-        android:strokeLineJoin="round"
-        android:pathData="M54,15 L84,26 L81,57 C79,75 67,87 54,94 C41,87 29,75 27,57 L24,26 Z" />
+    <!-- Crown -->
+    <path android:fillColor="#E51B36"
+        android:pathData="M39,17 L34,8 L45,14 L54,5 L63,14 L74,8 L69,22 L39,22 Z" />
+    <path android:fillColor="#F7F7F7" android:pathData="M40,23h28v3h-28z" />
 
-    <!-- Shield inner edge -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#45BFE8"
-        android:strokeWidth="1.4"
-        android:strokeAlpha="0.9"
-        android:pathData="M54,22 L77,30 L75,56 C73,70 64,80 54,86 C44,80 35,70 33,56 L31,30 Z" />
+    <!-- Open shackle and lock -->
+    <path android:fillColor="#00000000" android:strokeColor="#F4F4F4"
+        android:strokeWidth="4.5" android:strokeLineCap="round"
+        android:pathData="M43,51 L43,44 C43,36 48,32 55,32 C62,32 67,37 67,44" />
+    <path android:fillColor="#E51B36"
+        android:pathData="M38,50 C38,47.8 39.8,46 42,46 H66 C68.2,46 70,47.8 70,50 V68 C70,70.2 68.2,72 66,72 H42 C39.8,72 38,70.2 38,68 Z" />
+    <path android:fillColor="#090909"
+        android:pathData="M54,51 C50.7,51 48,53.7 48,57 C48,59.2 49.2,61.1 51,62.1 L49,68 H59 L57,62.1 C58.8,61.1 60,59.2 60,57 C60,53.7 57.3,51 54,51 Z" />
 
-    <!-- Unlocked shackle -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#F4FCFF"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M43,49 L43,40 C43,31 49,26 57,26 C64,26 69,30 71,36" />
-
-    <!-- Lock body -->
-    <path
-        android:fillColor="#62E0C2"
-        android:pathData="M37,47 C37,44.8 38.8,43 41,43 H68 C70.2,43 72,44.8 72,47 V67 C72,69.2 70.2,71 68,71 H41 C38.8,71 37,69.2 37,67 Z" />
-
-    <!-- Lightning cut through the lock -->
-    <path
-        android:fillColor="#082332"
-        android:pathData="M56,46 L45,59 H53 L50,68 L64,54 H56 Z" />
-
-    <!-- Small highlight -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M77,17 L79,22 L84,24 L79,26 L77,31 L75,26 L70,24 L75,22 Z"
-        android:fillAlpha="0.9" />
+    <!-- Dynamic red orbit -->
+    <path android:fillColor="#00000000" android:strokeColor="#FF263F"
+        android:strokeWidth="3.4" android:strokeLineCap="round"
+        android:pathData="M14,68 C24,91 73,91 94,57 C101,45 93,36 82,34" />
+    <path android:fillColor="#FF344A"
+        android:pathData="M89,27 L99,32 L88,38 Z" />
 </vector>
