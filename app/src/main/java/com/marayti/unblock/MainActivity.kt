@@ -726,11 +726,51 @@ private fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(18.dp),
         horizontalAlignment = Alignment.End
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            val settingsTitleMotion = rememberInfiniteTransition(label = "settings-title-spin")
-            val settingsTitleRotation by settingsTitleMotion.animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(animation = tween(5200, easing = LinearEasing)), label = "settings-title-rotation")
-            Icon(Icons.Filled.Settings, contentDescription = null, tint = Color(0xFFFF2448), modifier = Modifier.rotate(settingsTitleRotation))
-            Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        val settingsHeaderMotion = rememberInfiniteTransition(label = "settings-header-blood-red")
+        val settingsHeaderPhase by settingsHeaderMotion.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(animation = tween(2600, easing = LinearEasing)),
+            label = "settings-header-phase"
+        )
+        val settingsTitleMotion = rememberInfiniteTransition(label = "settings-title-spin")
+        val settingsTitleRotation by settingsTitleMotion.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(animation = tween(5200, easing = LinearEasing)),
+            label = "settings-title-rotation"
+        )
+        Card(
+            modifier = Modifier,
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            border = BorderStroke(
+                1.8.dp,
+                Brush.sweepGradient(
+                    listOf(Color(0xFFFF1744), Color(0xFF790014), Color(0xFFFF0033), Color(0xFF3D000B), Color(0xFFFF1744)),
+                    center = androidx.compose.ui.geometry.Offset(
+                        180f + 70f * kotlin.math.sin(settingsHeaderPhase * (2f * Math.PI).toFloat()),
+                        60f + 25f * kotlin.math.cos(settingsHeaderPhase * (2f * Math.PI).toFloat())
+                    )
+                )
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(Color(0xFF3B0009), Color(0xFFB00025), Color(0xFF59000F), Color(0xFF210005)),
+                            start = androidx.compose.ui.geometry.Offset(settingsHeaderPhase * 520f, 0f),
+                            end = androidx.compose.ui.geometry.Offset(settingsHeaderPhase * 520f + 520f, 180f)
+                        )
+                    )
+                    .padding(horizontal = 20.dp, vertical = 13.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(Icons.Filled.Settings, contentDescription = null, tint = Color.White, modifier = Modifier.rotate(settingsTitleRotation))
+                Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            }
         }
         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF4A000B)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.5.dp, Color(0xFFE0002B).copy(alpha = 0.90f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
