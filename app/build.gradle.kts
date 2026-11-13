@@ -14,8 +14,8 @@ android {
         applicationId = "com.marayti.unblock"
         minSdk = 24
         targetSdk = 35
-        versionCode = 18
-        versionName = "1.3.3"
+        versionCode = 19
+        versionName = "1.3.4"
     }
 
     compileOptions {
