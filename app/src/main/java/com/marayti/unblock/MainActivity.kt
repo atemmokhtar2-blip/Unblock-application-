@@ -664,7 +664,7 @@ private fun AnimatedBackdrop(useRedTheme: Boolean = false, useSettingsTheme: Boo
     Canvas(Modifier.fillMaxSize()) {
         drawRect(brush = Brush.linearGradient(
             colors = when {
-                useSettingsTheme -> listOf(Color(0xFF101512), Color(0xFF1B2822), Color(0xFF30251B), Color(0xFF241B28), Color(0xFF101512))
+                useSettingsTheme -> listOf(Color(0xFF020202), Color(0xFF100006), Color(0xFF260009), Color(0xFF090003), Color(0xFF020202))
                 useRedTheme -> listOf(Color(0xFF020203), Color(0xFF16070B), Color(0xFF350B16), Color(0xFF080609))
                 else -> listOf(Color(0xFF07131F), Color(0xFF102A38), Color(0xFF11152B))
             },
@@ -672,15 +672,15 @@ private fun AnimatedBackdrop(useRedTheme: Boolean = false, useSettingsTheme: Boo
             end = androidx.compose.ui.geometry.Offset(size.width, size.height)
         ))
         if (useSettingsTheme) {
-            drawCircle(Color(0x5549A887), radius = size.minDimension * 0.58f,
-                center = androidx.compose.ui.geometry.Offset(size.width * 0.04f, size.height * 0.16f))
-            drawCircle(Color(0x55D6A45D), radius = size.minDimension * 0.52f,
-                center = androidx.compose.ui.geometry.Offset(size.width * 0.98f, size.height * 0.34f))
-            drawCircle(Color(0x55C49A61), radius = size.minDimension * 0.48f,
-                center = androidx.compose.ui.geometry.Offset(size.width * 0.12f, size.height * 0.94f))
-            drawCircle(Color(0x55B86C58), radius = size.minDimension * 0.40f,
-                center = androidx.compose.ui.geometry.Offset(size.width * 0.96f, size.height * 0.88f))
-            drawCircle(Color(0x3349A887), radius = size.minDimension * 0.30f,
+            drawCircle(Color(0x44B00020), radius = size.minDimension * 0.52f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.02f, size.height * 0.12f))
+            drawCircle(Color(0x338D0018), radius = size.minDimension * 0.44f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.98f, size.height * 0.42f))
+            drawCircle(Color(0x33C00024), radius = size.minDimension * 0.46f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.08f, size.height * 0.96f))
+            drawCircle(Color(0x22800016), radius = size.minDimension * 0.36f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.96f, size.height * 0.90f))
+            drawCircle(Color(0x18700012), radius = size.minDimension * 0.28f,
                 center = androidx.compose.ui.geometry.Offset(size.width * 0.52f, size.height * 0.52f))
         } else if (useRedTheme) {
             drawCircle(Color(0x35B51632), radius = size.minDimension * 0.52f,
