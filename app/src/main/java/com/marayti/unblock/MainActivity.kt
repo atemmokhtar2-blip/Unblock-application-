@@ -1,12 +1,14 @@
 package com.marayti.unblock
 
 import android.content.Intent
+import android.content.ClipData
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.os.Build
 import androidx.core.app.ActivityCompat
+import androidx.core.content.FileProvider
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -207,6 +209,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
     var outputType by remember { mutableStateOf("long") }
     var imageStatus by remember { mutableStateOf("لم يتم اختيار صورة إشعار الحظر بعد") }
     var imageAccepted by remember { mutableStateOf(false) }
+    var selectedEvidenceUri by remember { mutableStateOf<Uri?>(null) }
     var evidence by remember { mutableStateOf(VerificationResult(false, "")) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
@@ -240,6 +243,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
         if (uri != null) {
             busy = true
             imageAccepted = false
+            selectedEvidenceUri = null
             evidence = VerificationResult(false, "")
             imageStatus = "جاري فحص الصورة على هاتفك…"
             scope.launch {
@@ -256,6 +260,7 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                 }
                 evidence = result
                 imageAccepted = result.accepted
+                selectedEvidenceUri = if (result.accepted) uri else null
                 imageStatus = result.message
             }
         }
@@ -463,16 +468,49 @@ private fun UnblockFlow(onReadImage: (Uri) -> ByteArray?) {
                                     }
                                     if (error.isBlank()) step++
                                 } else {
-                                    val emailIntent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "message/rfc822"
-                                        putExtra(Intent.EXTRA_EMAIL, arrayOf("support@whatsapp.com"))
-                                        putExtra(Intent.EXTRA_SUBJECT, emailSubject)
-                                        putExtra(Intent.EXTRA_TEXT, emailBody)
-                                    }
                                     try {
+                                        val sourceUri = selectedEvidenceUri
+                                            ?: throw IllegalStateException("صورة إثبات الحظر غير متاحة. ارجع للخطوة الثانية واختر الصورة مرة أخرى.")
+                                        val resolver = context.contentResolver
+                                        val mimeType = resolver.getType(sourceUri)
+                                            ?.takeIf { it.startsWith("image/") }
+                                            ?: "image/jpeg"
+                                        val extension = when (mimeType.lowercase()) {
+                                            "image/png" -> "png"
+                                            "image/webp" -> "webp"
+                                            "image/heic" -> "heic"
+                                            else -> "jpg"
+                                        }
+                                        val attachmentDirectory = java.io.File(context.cacheDir, "email_evidence")
+                                            .apply { mkdirs() }
+                                        val attachmentFile = java.io.File(attachmentDirectory, "unblock-evidence.$extension")
+                                        resolver.openInputStream(sourceUri)?.use { input ->
+                                            attachmentFile.outputStream().buffered().use { output ->
+                                                input.copyTo(output)
+                                            }
+                                        } ?: throw IllegalStateException("تعذرت قراءة صورة إثبات الحظر.")
+                                        if (attachmentFile.length() !in 1..(5L * 1024L * 1024L)) {
+                                            attachmentFile.delete()
+                                            throw IllegalStateException("حجم الصورة المرفقة غير صالح أو أكبر من 5 ميجابايت.")
+                                        }
+                                        val attachmentUri = FileProvider.getUriForFile(
+                                            context,
+                                            "${context.packageName}.fileprovider",
+                                            attachmentFile
+                                        )
+                                        val emailIntent = Intent(Intent.ACTION_SEND).apply {
+                                            type = mimeType
+                                            putExtra(Intent.EXTRA_EMAIL, arrayOf("support@whatsapp.com"))
+                                            putExtra(Intent.EXTRA_SUBJECT, emailSubject)
+                                            putExtra(Intent.EXTRA_TEXT, emailBody)
+                                            putExtra(Intent.EXTRA_STREAM, attachmentUri)
+                                            clipData = ClipData.newUri(resolver, "UNBLOCK evidence", attachmentUri)
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
                                         context.startActivity(Intent.createChooser(emailIntent, "إرسال طلب مراجعة واتساب"))
-                                    } catch (_: Exception) {
-                                        error = "لم يتم العثور على تطبيق بريد. ثبّت Gmail أو تطبيق بريد ثم حاول مرة أخرى."
+                                    } catch (exception: Exception) {
+                                        error = exception.message
+                                            ?: "تعذر تجهيز البريد أو إرفاق صورة إثبات الحظر. حاول مرة أخرى."
                                     }
                                 }
                             }
