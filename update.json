@@ -1,8 +1,8 @@
 {
-  "versionName": "1.3.0",
-  "versionCode": 15,
-  "apkUrl": "https://github.com/atemmokhtar2-blip/Unblock-application-/releases/download/unblock-v1.3.0-15/unblock-release.apk",
-  "sha256": "642a8077cb87981d39fc7426737624884bfcc75481c1c8a9ac4b622448e051fb",
-  "apkSizeBytes": 33048625,
-  "checksumUrl": "https://github.com/atemmokhtar2-blip/Unblock-application-/releases/download/unblock-v1.3.0-15/unblock-release.apk.sha256"
+  "versionName": "1.3.1",
+  "versionCode": 16,
+  "apkUrl": "https://github.com/atemmokhtar2-blip/Unblock-application-/releases/download/unblock-v1.3.1-16/unblock-release.apk",
+  "sha256": "6fc99cca046fcbbf8a0980a371824b7adfd9439a00a0fd610184709e06b7312d",
+  "apkSizeBytes": 33048629,
+  "checksumUrl": "https://github.com/atemmokhtar2-blip/Unblock-application-/releases/download/unblock-v1.3.1-16/unblock-release.apk.sha256"
 }
