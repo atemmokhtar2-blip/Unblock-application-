@@ -773,7 +773,7 @@ private fun SettingsScreen(
                 Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             }
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF4A000B)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.5.dp, Color(0xFFE0002B).copy(alpha = 0.90f))) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color.Black), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.5.dp, Color(0xFFE0002B).copy(alpha = 0.90f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Bolt, contentDescription = null, tint = Mint)
@@ -817,7 +817,7 @@ private fun SettingsScreen(
                 }
             }
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF4A000B)), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.5.dp, Color(0xFFE0002B).copy(alpha = 0.90f))) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color.Black), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.5.dp, Color(0xFFE0002B).copy(alpha = 0.90f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Send, contentDescription = null, tint = Mint)
