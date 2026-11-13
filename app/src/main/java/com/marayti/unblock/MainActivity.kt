@@ -723,15 +723,6 @@ private fun SettingsScreen(
             Icon(Icons.Filled.Settings, contentDescription = null, tint = Color(0xFF7CF7E2), modifier = Modifier.rotate(settingsTitleRotation))
             Text("الإعدادات", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Color.Black), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFF65C69A).copy(alpha = 0.55f))) {
-            Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Filled.Info, contentDescription = null, tint = Mint)
-                    Text("عن التطبيق", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                }
-                Text("فحص محلي لصور إشعارات حظر واتساب وتجهيز طلب مراجعة. لا يتم رفع الصور إلى أي خادم.", color = Color.White, textAlign = TextAlign.End)
-            }
-        }
         Card(colors = CardDefaults.cardColors(containerColor = Color.Black), shape = RoundedCornerShape(24.dp), border = BorderStroke(1.dp, Color(0xFF72D6A8).copy(alpha = 0.60f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
