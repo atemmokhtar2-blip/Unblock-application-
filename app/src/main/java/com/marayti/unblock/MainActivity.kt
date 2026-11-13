@@ -109,7 +109,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private val Ink = Color(0xFF07131F)
-private val Panel = Color(0xFF142431)
+private val Panel = Color.Black
 private val Mint = Color(0xFF65E0C0)
 private val Muted = Color(0xFFA7B7C3)
 private val DisplayFont = FontFamily(Font(R.font.alexandria_variable))
